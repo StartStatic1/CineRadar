@@ -4,7 +4,7 @@ const Navbar = {
         if (!c) return;
         c.innerHTML = `
             <nav class="navbar">
-                <a href="#/home" class="logo"><i class="fas fa-radar"></i><span>CineRadar</span></a>
+                <a href="#/home" class="logo"><i class="fas fa-compass"></i><span>CineRadar</span></a>
                 <div class="nav-actions">
                     <a href="#/search" class="search-trigger"><i class="fas fa-search"></i></a>
                 </div>
