@@ -20,7 +20,7 @@ const ExplorePage = {
                 data = await API.discoverByProvider(this.provider, this.type, this.page);
             } else if (up.get('trending')) {
                 title = 'Trending';
-                data = await API.getTrending(this.type, 'week', this.page);
+                data = await API.getTrending(this.type, this.page);
             } else {
                 title = this.type === 'movie' ? 'Filmes Populares' : 'Séries Populares';
                 data = this.type === 'movie' ? await API.getPopularMovies(this.page) : await API.getPopularTV(this.page);
@@ -45,7 +45,9 @@ const ExplorePage = {
                         </div>
                         ${Object.values(CONFIG.PROVIDERS).map(p => `
                             <div class="provider-item ${this.provider === p.id ? 'active' : ''}" onclick="ExplorePage.setProvider(${p.id})">
-                                <div class="provider-icon" style="background:${p.color}">${p.name.substring(0, 2)}</div>
+                                <div class="provider-icon" style="background:transparent;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden">
+                                    <img src="${p.logo}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:4px" onerror="this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=color:white;font-weight:800;font-size:0.75rem>${p.name.substring(0,2)}</span>'">
+                                </div>
                                 <span>${p.name}</span>
                             </div>
                         `).join('')}
