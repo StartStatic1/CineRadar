@@ -17,7 +17,6 @@ const API = {
         return data;
     },
 
-    // Busca Watchmode ID via TMDB ID
     async getWatchmodeId(tmdbId, type) {
         const tmdbType = type === 'tv' ? 'tmdb_tv_id' : 'tmdb_movie_id';
         const data = await this.watchmode('/search', {
@@ -27,10 +26,25 @@ const API = {
         return data.title_results?.[0]?.id || null;
     },
 
-    // Busca sources enriquecidos do Watchmode
     async getWatchmodeSources(watchmodeId, regions = 'BR') {
         if (!watchmodeId) return null;
         return this.watchmode(`/title/${watchmodeId}/sources`, { regions });
+    },
+
+    // Busca clips/reels do TMDB (YouTube shorts/clips)
+    async getClips(id, type) {
+        const ep = type === 'tv' ? `/tv/${id}/videos` : `/movie/${id}/videos`;
+        const data = await this.tmdb(ep);
+        // Filtra apenas Clip, Teaser, Featurette (vídeos curtos)
+        return data.results?.filter(v => 
+            ['Clip', 'Teaser', 'Featurette'].includes(v.type) && v.site === 'YouTube'
+        ) || [];
+    },
+
+    // Busca recomendações/similares
+    async getSimilar(id, type) {
+        const ep = type === 'tv' ? `/tv/${id}/similar` : `/movie/${id}/similar`;
+        return this.tmdb(ep, { page: 1 });
     },
 
     getTrending(type = 'all', page = 1) { 
@@ -38,12 +52,12 @@ const API = {
     },
     getMovieDetails(id) { 
         return this.tmdb(`/movie/${id}`, { 
-            append_to_response: 'credits,videos,watch/providers' 
+            append_to_response: 'credits,videos,watch/providers,recommendations' 
         }); 
     },
     getTVDetails(id) { 
         return this.tmdb(`/tv/${id}`, { 
-            append_to_response: 'credits,videos,watch/providers' 
+            append_to_response: 'credits,videos,watch/providers,recommendations' 
         }); 
     },
     getUpcoming(page = 1) { 
