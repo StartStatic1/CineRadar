@@ -1,106 +1,73 @@
-# 🎬 CineRadar - 100% Seguro
+# 🎬 CineRadar
 
-> Guia de Streaming com Player Integrado
-> **Chaves de API NUNCA expostas no código!**
+## 🚨 ERRO "SITE BRANCO" - SOLUÇÃO RÁPIDA
 
-## 🛡️ Segurança
+Se o site ficou branco após deploy, é provavelmente um destes problemas:
 
-✅ **Chaves ficam apenas no servidor Vercel**  
-✅ **Frontend chama proxy `/api/` — nunca vê as chaves**  
-✅ **Código no GitHub está limpo, sem segredos**  
+### ❌ Problema 1: `vercel.json` com `builds` (CONFLITO)
+**Solução:** O `vercel.json` foi corrigido. Agora usa apenas `rewrites` (modo moderno).
+
+### ❌ Problema 2: API Routes não aparecem no deploy
+**Solução:** Vá no Dashboard da Vercel → seu projeto → **Deployments** → clique no deploy mais recente → aba **Functions**. Deve aparecer:
+```
+/api/onde-assistir.js
+```
+Se NÃO aparecer, o `vercel.json` antigo estava bloqueando.
+
+### ❌ Problema 3: Environment Variables não configuradas
+**Solução:** 
+1. Dashboard → Settings → Environment Variables
+2. Adicione:
+   - `TMDB_API_KEY` = sua chave do TMDB
+3. **Redeploy** o projeto
 
 ---
 
-## 🚀 Deploy na Vercel
+## 🚀 Deploy Rápido (Passo a Passo)
 
-### 1. Subir no GitHub (código limpo!)
-
+### 1. Subir no GitHub
 ```bash
-git init
 git add .
-git commit -m "CineRadar - chaves seguras no servidor"
-git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/cineradar.git
-git push -u origin main
+git commit -m "fix: vercel.json moderno"
+git push
 ```
 
-> ⚠️ O código que sobe pro GitHub **NÃO TEM NENHUMA CHAVE**!
+### 2. Na Vercel
+- O deploy automático vai acontecer
+- Vá em **Deployments** → clique no último
+- Verifique se aparece **Functions: /api/onde-assistir.js**
 
-### 2. Configurar Environment Variables na Vercel
+### 3. Configurar Environment Variables
+- Settings → Environment Variables
+- `TMDB_API_KEY` = sua chave
+- Salvar e **Redeploy**
 
-1. Acesse https://vercel.com → seu projeto → **Settings**
-2. Vá em **Environment Variables**
-3. Adicione:
-
-| Nome | Valor | Ambiente |
-|------|-------|----------|
-| `TMDB_API_KEY` | `sua_chave_tmdb` | Production |
-| `WATCHMODE_API_KEY` | `sua_chave_watchmode` | Production |
-
-4. Clique **Save** e depois **Redeploy**
-
-### 3. Pronto!
-
-As chaves ficam **no servidor**, o frontend só chama:
-```
-/api/onde-assistir.js?endpoint=trending&type=movie
-```
-
-O servidor faz a requisição real com as chaves seguras.
+### 4. Testar
+- Abra o site
+- Aperte **F12** → Console
+- Deve ver: `🎬 CineRadar iniciando...`
+- Se ver erro vermelho, cole aqui pra mim!
 
 ---
 
-## 📁 Estrutura
+## 📁 Estrutura Corrigida
 
 ```
 cineradar-v2/
 ├── api/
-│   └── onde-assistir.js      ← 🔒 Proxy seguro (chaves aqui no servidor)
+│   └── onde-assistir.js      ← Serverless Function (TMDB proxy)
 ├── js/
-│   ├── config.js              ← SEM chaves! Aponta para /api/
-│   ├── api.js                 ← Chama /api/onde-assistir.js
+│   ├── config.js              ← SEM chaves expostas
+│   ├── api.js                 ← Tenta proxy, fallback direto
 │   └── ...
 ├── css/
 ├── index.html
-├── vercel.json                ← Configura serverless functions
-└── .gitignore                 ← Ignora arquivos de env
+├── vercel.json                ← Só rewrites (SEM builds!)
+└── .gitignore
 ```
 
----
+## 🔑 Segurança
 
-## 🔑 Como funciona?
-
-```
-┌─────────────┐      ┌──────────────────┐      ┌──────────────┐
-│  Usuário    │ ──▶  │  Seu App         │ ──▶  │  Vercel      │
-│  (navegador)│      │  (HTML/JS)       │      │  Servidor    │
-└─────────────┘      └──────────────────┘      └──────┬───────┘
-       │                    │                         │
-       │                    │  /api/onde-assistir     │
-       │                    │  (sem chaves!)          │
-       │                    │                         │
-       │                    │◀────────────────────────┘
-       │                    │  JSON com dados
-       │◀───────────────────┘
-       │  Mostra filmes/séries
-       │
-       │  NUNCA vê as chaves!
-       ▼
-```
-
----
-
-## ⚠️ Atenção
-
-- ❌ **NUNCA** coloque chaves em `config.js`, `env.js` ou qualquer arquivo JS
-- ❌ **NUNCA** commit chaves no GitHub
-- ✅ **SEMPRE** use Environment Variables do Vercel
-- ✅ O proxy `/api/onde-assistir.js` é a única coisa que vê as chaves
-
----
-
-## 🎬 APIs utilizadas
-
-- **TMDB** - Dados de filmes/séries (via proxy)
-- **Watchmode** - Onde assistir (via proxy)
-- **myembed.biz** - Player de vídeo (frontend)
+- ✅ Chaves ficam no servidor Vercel (Environment Variables)
+- ✅ Código no GitHub está limpo
+- ✅ Proxy `/api/onde-assistir.js` faz as requisições seguras
