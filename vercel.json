@@ -2,8 +2,16 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/tmdb",
+      "destination": "/api/tmdb.js"
+    },
+    {
+      "source": "/api/watchmode",
+      "destination": "/api/watchmode.js"
+    },
+    {
+      "source": "/api/omdb",
+      "destination": "/api/omdb.js"
     },
     {
       "source": "/(.*)",
