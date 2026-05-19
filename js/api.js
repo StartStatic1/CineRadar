@@ -1,97 +1,27 @@
-// ==========================================
-// API TMDB
-// ==========================================
-
 const API = {
-    async request(endpoint, params = {}) {
-        if (!CONFIG.TMDB_API_KEY) {
-            throw new Error('API_KEY_MISSING');
+    // Proxy seguro - chaves ficam no servidor!
+    async proxy(endpoint, params = {}) {
+        const query = new URLSearchParams({ endpoint, ...params }).toString();
+        const res = await fetch(`${CONFIG.API_BASE}/onde-assistir.js?${query}`);
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || `HTTP ${res.status}`);
         }
-
-        const queryParams = new URLSearchParams({
-            api_key: CONFIG.TMDB_API_KEY,
-            language: CONFIG.LANGUAGE,
-            region: CONFIG.REGION,
-            ...params
-        });
-
-        const url = `${CONFIG.TMDB_BASE_URL}${endpoint}?${queryParams}`;
-
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                if (response.status === 401) throw new Error('API_KEY_INVALID');
-                throw new Error(`HTTP ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
+        return res.json();
     },
 
-    // Trending
-    getTrending(mediaType = 'all', timeWindow = 'week', page = 1) {
-        return this.request(`/trending/${mediaType}/${timeWindow}`, { page });
-    },
+    // TMDB via proxy
+    getTrending(type = 'all', page = 1) { return this.proxy('trending', { type, page }); },
+    getMovieDetails(id) { return this.proxy('movie-details', { id }); },
+    getTVDetails(id) { return this.proxy('tv-details', { id }); },
+    getUpcoming(page = 1) { return this.proxy('upcoming', { page }); },
+    getNowPlaying(page = 1) { return this.proxy('now-playing', { page }); },
+    getPopularMovies(page = 1) { return this.proxy('popular-movies', { page }); },
+    getPopularTV(page = 1) { return this.proxy('popular-tv', { page }); },
+    getAiringToday(page = 1) { return this.proxy('airing-today', { page }); },
+    search(query, page = 1) { return this.proxy('search', { query, page }); },
+    discoverByProvider(provider, type = 'movie', page = 1) { return this.proxy('discover', { provider, type, page }); },
 
-    // Movies
-    getMovieDetails(id) {
-        return this.request(`/movie/${id}`, {
-            append_to_response: 'credits,videos,watch/providers'
-        });
-    },
-
-    getUpcomingMovies(page = 1) {
-        return this.request('/movie/upcoming', { page });
-    },
-
-    getNowPlaying(page = 1) {
-        return this.request('/movie/now_playing', { page });
-    },
-
-    getPopularMovies(page = 1) {
-        return this.request('/movie/popular', { page });
-    },
-
-    // TV Shows
-    getTVDetails(id) {
-        return this.request(`/tv/${id}`, {
-            append_to_response: 'credits,videos,watch/providers'
-        });
-    },
-
-    getPopularTV(page = 1) {
-        return this.request('/tv/popular', { page });
-    },
-
-    getAiringToday(page = 1) {
-        return this.request('/tv/airing_today', { page });
-    },
-
-    // Search
-    search(query, page = 1) {
-        return this.request('/search/multi', { query, page, include_adult: false });
-    },
-
-    // Discover by provider
-    discoverByProvider(providerId, type = 'movie', page = 1) {
-        const endpoint = type === 'movie' ? '/discover/movie' : '/discover/tv';
-        return this.request(endpoint, {
-            with_watch_providers: providerId,
-            watch_region: CONFIG.REGION,
-            sort_by: 'popularity.desc',
-            page
-        });
-    },
-
-    // Providers
-    getWatchProviders(type = 'movie') {
-        return this.request(`/watch/providers/${type}`);
-    },
-
-    // Genres
-    getGenres(type = 'movie') {
-        return this.request(`/genre/${type}/list`);
-    }
+    // Watchmode via proxy
+    getWatchmodeSources(id, type = 'movie') { return this.proxy('watchmode-sources', { id, type }); }
 };

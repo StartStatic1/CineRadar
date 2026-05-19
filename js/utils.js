@@ -1,87 +1,53 @@
-// ==========================================
-// UTILITÁRIOS
-// ==========================================
-
-function $(selector) {
-    return document.querySelector(selector);
-}
-
-function $$(selector) {
-    return document.querySelectorAll(selector);
-}
+function $(s) { return document.querySelector(s); }
+function $$(s) { return document.querySelectorAll(s); }
 
 function formatDate(dateStr) {
     if (!dateStr) return 'Data desconhecida';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-    });
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function formatRuntime(minutes) {
-    if (!minutes) return '';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${h}h ${m}min`;
+function formatRuntime(min) {
+    if (!min) return '';
+    const h = Math.floor(min / 60), m = min % 60;
+    return h > 0 ? `${h}h ${m}min` : `${m}min`;
 }
 
-function formatRating(rating) {
-    if (!rating) return 'N/A';
-    return rating.toFixed(1);
+function formatRating(r) {
+    return r ? r.toFixed(1) : 'N/A';
 }
 
-function getImageUrl(path, size = 'w500') {
-    if (!path) return 'https://via.placeholder.com/500x750/1f1f1f/666?text=Sem+Imagem';
-    return `${CONFIG.TMDB_IMAGE_URL}/${size}${path}`;
+function getImageUrl(path, size = 'w342') {
+    return path ? `${CONFIG.TMDB_IMAGE_URL}/${size}${path}` : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="342" height="513"><rect fill="%23181818" width="342" height="513"/><text fill="%23666" x="50%" y="50%" text-anchor="middle" font-size="16">Sem Imagem</text></svg>';
 }
 
 function getBackdropUrl(path, size = 'w1280') {
-    if (!path) return '';
-    return `${CONFIG.TMDB_IMAGE_URL}/${size}${path}`;
+    return path ? `${CONFIG.TMDB_IMAGE_URL}/${size}${path}` : '';
 }
 
-function showToast(message, type = 'info') {
-    const container = $('#toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-
-    const icons = {
-        success: 'fa-check-circle',
-        error: 'fa-exclamation-circle',
-        info: 'fa-info-circle'
-    };
-
-    toast.innerHTML = `
-        <i class="fas ${icons[type]}"></i>
-        <span>${message}</span>
-    `;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.animation = 'fadeOut 0.3s ease forwards';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+function showToast(msg, type = 'info') {
+    const c = $('#toast-container');
+    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i class="fas ${icons[type]}"></i><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.animation = 'fadeOut 0.3s forwards'; setTimeout(() => t.remove(), 300); }, 3000);
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+function debounce(fn, wait) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
 }
 
-function slugify(text) {
-    return text.toLowerCase()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
+function getRelativeDate(dateStr) {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((d - now) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return 'Hoje';
+    if (diff === 1) return 'Amanhã';
+    if (diff === -1) return 'Ontem';
+    if (diff > 1 && diff <= 7) return `Em ${diff} dias`;
+    if (diff < -1 && diff >= -7) return `Há ${Math.abs(diff)} dias`;
+    return formatDate(dateStr);
 }
