@@ -1,23 +1,30 @@
 // ==========================================
-// CONFIG - SEM CHAVES EXPOSTAS!
+// CONFIG - API Keys
 // ==========================================
-// As chaves ficam apenas no servidor Vercel (Environment Variables)
-// O frontend chama o proxy /api/onde-assistir.js que faz as requisições
+// 
+// MODO VERCEL (recomendado):
+// 1. Vá em Project Settings > Environment Variables
+// 2. Adicione: TMDB_API_KEY = sua_chave
+// 3. A Vercel injeta automaticamente no servidor
+//
+// MODO LOCAL/DESENVOLVIMENTO:
+// Se quiser testar local sem o proxy, descomente e preencha:
+// const LOCAL_TMDB_KEY = 'sua_chave_aqui';
+
+const LOCAL_TMDB_KEY = ''; // Deixe vazio para usar proxy
 
 const CONFIG = {
-    // SEM API KEYS AQUI! 🛡️
-    // As chaves estão seguras no servidor Vercel
+    // TMDB API Key - usa local se preenchido, senão espera do servidor
+    TMDB_API_KEY: LOCAL_TMDB_KEY || (typeof process !== 'undefined' && process.env?.TMDB_API_KEY) || '',
 
-    // URL base da API (proxy seguro)
-    API_BASE: window.location.origin.includes('localhost') 
-        ? 'http://localhost:3000/api'  // Desenvolvimento local
-        : '/api',                       // Produção Vercel
-
+    // URLs
+    TMDB_BASE_URL: 'https://api.themoviedb.org/3',
     TMDB_IMAGE_URL: 'https://image.tmdb.org/t/p',
+    API_BASE: window.location.origin.includes('localhost') ? 'http://localhost:3000/api' : '/api',
     REGION: 'BR',
     LANGUAGE: 'pt-BR',
 
-    // Player embed
+    // Player
     PLAYER_BASE_URL: 'https://myembed.biz',
 
     // Providers
