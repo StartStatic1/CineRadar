@@ -1,0 +1,17 @@
+# Chaves e configs locais
+.env
+.env.local
+.env.*.local
+
+# Arquivos de ambiente (não commitar!)
+js/env.local.js
+js/env.js
+
+# Build
+node_modules/
+.vercel
+dist/
+
+# Sistema
+.DS_Store
+*.zip
