@@ -5,12 +5,14 @@ const HomePage = {
         Loader.render();
 
         try {
-            const [trending, upcoming, popularMovies, popularTV, nowPlaying] = await Promise.all([
+            // Busca paralela de todos os dados
+            const [trending, upcoming, popularMovies, popularTV, nowPlaying, topRatedMovies] = await Promise.all([
                 API.getTrending('all', 1).catch(() => ({ results: [] })),
                 API.getUpcoming(1).catch(() => ({ results: [] })),
                 API.getPopularMovies(1).catch(() => ({ results: [] })),
                 API.getPopularTV(1).catch(() => ({ results: [] })),
-                API.getNowPlaying(1).catch(() => ({ results: [] }))
+                API.getNowPlaying(1).catch(() => ({ results: [] })),
+                API.getTopRated('movie', 1).catch(() => ({ results: [] }))
             ]);
 
             if (!trending.results || !trending.results.length) {
@@ -19,6 +21,9 @@ const HomePage = {
 
             const heroItem = trending.results[0];
             const heroType = heroItem.media_type || 'movie';
+
+            // Busca seções por provider em paralelo (silencioso, não bloqueia)
+            const providerSections = await this.loadProviderSections();
 
             main.innerHTML = `
                 <div class="home-page">
@@ -32,6 +37,8 @@ const HomePage = {
                             link: '#/explore?trending=1', 
                             showNumbers: true 
                         })}
+
+                        ${providerSections}
 
                         ${nowPlaying.results.length ? Carousel.render('Nos Cinemas', nowPlaying.results.slice(0, 10), { 
                             icon: 'ticket-alt', 
@@ -53,6 +60,11 @@ const HomePage = {
                             icon: 'tv', 
                             link: '#/explore?type=tv', 
                             big: true 
+                        }) : ''}
+
+                        ${topRatedMovies.results.length ? Carousel.render('Melhores Avaliados', topRatedMovies.results.slice(0, 10), { 
+                            icon: 'star', 
+                            link: '#/explore?type=movie' 
                         }) : ''}
                     </div>
                 </div>
@@ -83,6 +95,7 @@ const HomePage = {
         }
     },
 
+    // Hero SEM botão "Assistir" (só Salvar e Info como no IndicaAí)
     renderHero(item, type) {
         const title = item.title || item.name || 'Sem título';
         const backdrop = getBackdropUrl(item.backdrop_path, 'w1280');
@@ -108,11 +121,12 @@ const HomePage = {
                     </div>
                     <p>${item.overview || ''}</p>
                     <div class="hero-actions">
-                        <button class="btn-play" onclick="Player.open(${item.id}, '${type}', '${title.replace(/'/g, "\'")}')">
-                            <i class="fas fa-play"></i> Assistir Agora
-                        </button>
                         <button class="btn btn-secondary" onclick="MovieCard.toggleList(event, ${item.id}, '${type}', '${title.replace(/'/g, "\'")}', '${item.poster_path || ''}')">
-                            <i class="fas fa-plus"></i> Minha Lista
+                            <i class="fas ${Storage.isInList(item.id, type) ? 'fa-check' : 'fa-plus'}"></i> 
+                            ${Storage.isInList(item.id, type) ? 'Salvo' : 'Minha Lista'}
+                        </button>
+                        <button class="btn btn-primary" onclick="Router.navigate('#/details/${type}/${item.id}')">
+                            <i class="fas fa-info-circle"></i> Info
                         </button>
                     </div>
                 </div>
@@ -126,14 +140,52 @@ const HomePage = {
             <div class="provider-strip">
                 ${providers.map(p => `
                     <div class="provider-item" onclick="Router.navigate('#/explore?provider=${p.id}')">
-                        <div class="provider-icon" style="background:transparent;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden;display:flex;align-items:center;justify-content:center">
-                            <img src="${p.logo}" alt="${p.name}" style="width:36px;height:36px;object-fit:contain" 
-                                onerror="this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=color:white;font-weight:800;font-size:0.7rem>${p.name.substring(0,2)}</span>'">
+                        <div class="provider-icon" style="background:transparent;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden">
+                            <img src="${p.logo}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:4px" onerror="this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=\'color:white;font-weight:800;font-size:0.75rem\'>${p.name.substring(0,2)}</span>'">
                         </div>
                         <span>${p.name}</span>
                     </div>
                 `).join('')}
             </div>
         `;
+    },
+
+    // Carrega seções por streaming (Netflix Top, Prime Top, etc)
+    async loadProviderSections() {
+        const providers = [
+            { key: 'netflix', type: 'movie' },
+            { key: 'prime', type: 'movie' },
+            { key: 'disney', type: 'movie' },
+            { key: 'max', type: 'tv' }
+        ];
+
+        const sections = [];
+
+        for (const p of providers) {
+            try {
+                const provider = CONFIG.PROVIDERS[p.key];
+                const data = await API.discoverByProvider(provider.id, p.type, 1);
+                if (data.results && data.results.length > 0) {
+                    sections.push(`
+                        <div class="provider-section">
+                            <div class="provider-section-header">
+                                <h2 class="provider-section-title">
+                                    <img src="${provider.logo}" alt="${provider.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-tv\'></i> ${provider.name}'">
+                                    Top ${provider.name}
+                                </h2>
+                                <a href="#/explore?provider=${provider.id}&type=${p.type}" class="section-link">Ver todos <i class="fas fa-chevron-right"></i></a>
+                            </div>
+                            <div class="carousel-container">
+                                ${data.results.slice(0, 8).map(i => MovieCard.render(i)).join('')}
+                            </div>
+                        </div>
+                    `);
+                }
+            } catch (e) {
+                console.log(`Provider ${p.key} error:`, e.message);
+            }
+        }
+
+        return sections.join('');
     }
 };

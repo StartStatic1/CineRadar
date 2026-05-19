@@ -5,35 +5,47 @@ const DetailsPage = {
         Loader.render();
 
         try {
-            // Busca paralela: TMDB detalhes + similares + clips + Watchmode
-            const data = type === 'tv' ? await API.getTVDetails(id) : await API.getMovieDetails(id);
+            // Busca paralela: TMDB + Watchmode + OMDb (silencioso)
+            const data = type === 'tv' 
+                ? await API.getTVDetails(id) 
+                : await API.getMovieDetails(id);
 
+            // Watchmode em paralelo (não bloqueia se falhar)
             let watchmodeSources = null;
-            let clips = [];
-            let similar = { results: [] };
-
             try {
-                const [wmId, clipsData, similarData] = await Promise.all([
-                    API.getWatchmodeId(id, type).catch(() => null),
-                    API.getClips(id, type).catch(() => []),
-                    API.getSimilar(id, type).catch(() => ({ results: [] }))
-                ]);
-                if (wmId) watchmodeSources = await API.getWatchmodeSources(wmId, 'BR');
-                clips = clipsData;
-                similar = similarData;
+                const wmId = await API.getWatchmodeId(id, type);
+                if (wmId) {
+                    watchmodeSources = await API.getWatchmodeSources(wmId, 'BR');
+                }
             } catch (e) {
-                console.log('Watchmode/Clips fallback:', e.message);
+                console.log('Watchmode fallback:', e.message);
+            }
+
+            // OMDb em paralelo (silencioso, enriquece dados)
+            let omdbData = null;
+            try {
+                const imdbId = data.external_ids?.imdb_id || data.imdb_id;
+                if (imdbId) {
+                    omdbData = await API.omdb({ i: imdbId, plot: 'full' });
+                }
+            } catch (e) {
+                console.log('OMDb fallback:', e.message);
             }
 
             const title = data.title || data.name;
             const backdrop = getBackdropUrl(data.backdrop_path, 'w1280');
             const poster = getImageUrl(data.poster_path, 'w500');
             const year = (data.release_date || data.first_air_date || '').substring(0, 4);
-            const runtime = type === 'movie' ? formatRuntime(data.runtime) : `${data.number_of_seasons || 0} temp.`;
+            const runtime = type === 'movie' 
+                ? formatRuntime(data.runtime) 
+                : `${data.number_of_seasons || 0} temp. · ${data.number_of_episodes || 0} eps`;
             const trailer = data.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube');
             const cast = data.credits?.cast?.slice(0, 12) || [];
+            const crew = data.credits?.crew?.filter(c => c.job === 'Director' || c.job === 'Creator').slice(0, 4) || [];
             const tmdbProviders = data['watch/providers']?.results?.[CONFIG.REGION];
-            const recommendations = data.recommendations?.results?.slice(0, 10) || similar.results?.slice(0, 10) || [];
+
+            // Sinopse: TMDB ou OMDb (mais completa)
+            const overview = data.overview || omdbData?.Plot || 'Sinopse não disponível.';
 
             Storage.addToHistory(id, type, title, data.poster_path);
 
@@ -54,7 +66,9 @@ const DetailsPage = {
                                     <span class="meta-text">${year}</span>
                                     <span class="meta-text">${runtime}</span>
                                     ${data.adult ? '<span class="badge badge-red" style="font-size:0.75rem">18+</span>' : ''}
+                                    ${omdbData?.Rated ? `<span class="badge badge-blue" style="font-size:0.75rem">${omdbData.Rated}</span>` : ''}
                                 </div>
+                                ${crew.length ? `<div class="detail-director">${crew.map(c => `<span>${c.job}: ${c.name}</span>`).join(' · ')}</div>` : ''}
                             </div>
                         </div>
 
@@ -62,11 +76,11 @@ const DetailsPage = {
                             <button class="btn-play" onclick="Player.open(${id}, '${type}', '${title.replace(/'/g, "\'")}')">
                                 <i class="fas fa-play"></i> Assistir
                             </button>
-                            <button class="btn btn-secondary" onclick="MovieCard.toggleList(event, ${id}, '${type}', '${title.replace(/'/g, "\'")}', '${data.poster_path || ''}')">
+                            <button class="btn btn-secondary ${Storage.isInList(id, type) ? 'active' : ''}" onclick="MovieCard.toggleList(event, ${id}, '${type}', '${title.replace(/'/g, "\'")}', '${data.poster_path || ''}')">
                                 <i class="fas ${Storage.isInList(id, type) ? 'fa-check' : 'fa-plus'}"></i>
                                 ${Storage.isInList(id, type) ? 'Salvo' : 'Salvar'}
                             </button>
-                            <button class="btn btn-secondary ${Storage.isWatched(id, type) ? 'btn-watched-active' : ''}" onclick="MovieCard.toggleWatched(event, ${id}, '${type}', '${title.replace(/'/g, "\'")}', '${data.poster_path || ''}')">
+                            <button class="btn btn-secondary ${Storage.isWatched(id, type) ? 'active' : ''}" onclick="MovieCard.toggleWatched(event, ${id}, '${type}', '${title.replace(/'/g, "\'")}', '${data.poster_path || ''}')">
                                 <i class="fas ${Storage.isWatched(id, type) ? 'fa-eye-slash' : 'fa-eye'}"></i>
                             </button>
                             ${trailer ? `<button class="btn btn-secondary" onclick="window.open('https://youtube.com/watch?v=${trailer.key}', '_blank')"><i class="fas fa-film"></i> Trailer</button>` : ''}
@@ -80,17 +94,16 @@ const DetailsPage = {
 
                         <div class="sinopse-section">
                             <h3>Sinopse</h3>
-                            <p>${data.overview || 'Sinopse não disponível.'}</p>
+                            <p>${overview}</p>
+                            ${omdbData?.Awards && omdbData.Awards !== 'N/A' ? `<p style="margin-top:8px;color:var(--warning);font-size:0.85rem"><i class="fas fa-trophy"></i> ${omdbData.Awards}</p>` : ''}
                         </div>
-
-                        ${clips.length > 0 ? this.renderClips(clips, title) : ''}
 
                         ${cast.length > 0 ? `
                             <div class="sinopse-section">
                                 <h3>Elenco</h3>
                                 <div class="cast-carousel">
                                     ${cast.map(a => `
-                                        <div class="cast-item" style="position:relative">
+                                        <div class="cast-item" onclick="Router.navigate('#/actor/${a.id}')" style="cursor:pointer">
                                             <img src="${getImageUrl(a.profile_path, 'w185')}" alt="${a.name}" loading="lazy" 
                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                                             <div class="cast-fallback" style="display:none;width:90px;height:90px;border-radius:50%;background:var(--bg-tertiary);align-items:center;justify-content:center;color:var(--text-muted);font-size:1.5rem;border:2px solid var(--bg-tertiary)">
@@ -104,11 +117,19 @@ const DetailsPage = {
                             </div>
                         ` : ''}
 
-                        ${recommendations.length > 0 ? `
-                            <div class="sinopse-section" style="margin-bottom:80px">
-                                <h3><i class="fas fa-thumbs-up" style="color:var(--accent)"></i> Você também pode gostar</h3>
-                                <div class="carousel-container">
-                                    ${recommendations.map(r => MovieCard.render({...r, media_type: r.media_type || type})).join('')}
+                        ${data.seasons ? `
+                            <div class="sinopse-section">
+                                <h3>Temporadas (${data.seasons.length})</h3>
+                                <div class="seasons-list">
+                                    ${data.seasons.filter(s => s.season_number > 0).map(s => `
+                                        <div class="season-card" onclick="Player.open(${id}, 'tv', '${title.replace(/'/g, "\'")}', ${s.season_number}, 1)">
+                                            <img src="${getImageUrl(s.poster_path, 'w185')}" alt="${s.name}" loading="lazy">
+                                            <div class="season-info">
+                                                <h4>${s.name}</h4>
+                                                <p>${s.episode_count} episódios · ${s.air_date ? s.air_date.substring(0,4) : 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
                                 </div>
                             </div>
                         ` : ''}
@@ -123,8 +144,14 @@ const DetailsPage = {
     renderProviders(tmdbProviders, watchmodeSources) {
         const merged = new Map();
 
+        // TMDB providers
         if (tmdbProviders) {
-            const cats = [['flatrate', 'stream'], ['ads', 'ads'], ['rent', 'rent'], ['buy', 'buy']];
+            const cats = [
+                ['flatrate', 'stream'],
+                ['ads', 'ads'],
+                ['rent', 'rent'],
+                ['buy', 'buy']
+            ];
             cats.forEach(([key, type]) => {
                 tmdbProviders[key]?.forEach(p => {
                     const id = p.provider_id;
@@ -142,15 +169,20 @@ const DetailsPage = {
             });
         }
 
+        // Watchmode sources enriquece com preços e links
         if (watchmodeSources && Array.isArray(watchmodeSources)) {
             watchmodeSources.forEach(s => {
                 const nameLower = s.name?.toLowerCase() || '';
                 let found = null;
+
                 for (const [key, p] of Object.entries(CONFIG.PROVIDERS)) {
-                    if (nameLower.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(nameLower)) {
-                        found = p; break;
+                    if (nameLower.includes(p.name.toLowerCase()) || 
+                        p.name.toLowerCase().includes(nameLower)) {
+                        found = p;
+                        break;
                     }
                 }
+
                 if (found && merged.has(found.id)) {
                     const entry = merged.get(found.id);
                     entry.price = s.price;
@@ -178,32 +210,6 @@ const DetailsPage = {
                             </span>
                             ${p.price ? `<span style="color:var(--accent);font-size:0.75rem;font-weight:700;margin-left:auto">${formatPrice(p.price)}</span>` : ''}
                             ${p.webUrl ? '<i class="fas fa-external-link-alt" style="font-size:0.65rem;color:var(--text-muted);margin-left:4px"></i>' : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    },
-
-    renderClips(clips, title) {
-        return `
-            <div class="sinopse-section">
-                <h3><i class="fas fa-video" style="color:var(--accent)"></i> Cenas & Bastidores</h3>
-                <div class="clips-carousel" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch">
-                    ${clips.slice(0, 6).map(c => `
-                        <div class="clip-card" onclick="window.open('https://youtube.com/watch?v=${c.key}', '_blank')" style="flex:0 0 auto;scroll-snap-align:start;width:160px;cursor:pointer">
-                            <div style="position:relative;width:160px;height:240px;border-radius:12px;overflow:hidden;background:var(--bg-card)">
-                                <img src="https://img.youtube.com/vi/${c.key}/mqdefault.jpg" alt="${c.name}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
-                                <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center">
-                                    <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center">
-                                        <i class="fas fa-play" style="color:var(--bg-primary);font-size:0.9rem;margin-left:2px"></i>
-                                    </div>
-                                </div>
-                                <div style="position:absolute;bottom:0;left:0;right:0;padding:8px;background:linear-gradient(transparent,rgba(0,0,0,0.8))">
-                                    <span style="font-size:0.7rem;font-weight:600;color:white">${c.type}</span>
-                                </div>
-                            </div>
-                            <p style="font-size:0.75rem;margin-top:6px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</p>
                         </div>
                     `).join('')}
                 </div>

@@ -51,13 +51,11 @@ const MyListPage = {
         return `
             <div class="carousel-item">
                 <div class="poster-wrapper" onclick="Router.navigate('#/details/${item.type}/${item.id}')">
-                    <img src="${poster}" alt="${item.title}" loading="lazy" onerror="this.src='${getImageUrl(null)}'">
+                    <img src="${poster}" alt="${item.title}" loading="lazy">
                     <div class="poster-overlay" style="opacity:1">
                         <div class="card-actions" onclick="event.stopPropagation()">
                             <button onclick="MyListPage.remove(${item.id}, '${item.type}')" title="Remover"><i class="fas fa-trash"></i></button>
-                            <button class="${isWatched ? 'active' : ''}" onclick="MyListPage.toggleWatched(${item.id}, '${item.type}', '${item.title.replace(/'/g, "\'")}', '${item.poster_path || ''}')" title="${isWatched ? 'Não assistido' : 'Assistido'}">
-                                <i class="fas ${isWatched ? 'fa-eye-slash' : 'fa-eye'}"></i>
-                            </button>
+                            <button class="${isWatched ? 'active' : ''}" onclick="MyListPage.toggleWatched(${item.id}, '${item.type}', '${item.title.replace(/'/g, "\'")}', '${item.poster_path || ''}')" title="Assistido"><i class="fas ${isWatched ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
                         </div>
                     </div>
                     ${isWatched ? '<div style="position:absolute;top:6px;right:6px;background:var(--accent);color:var(--bg-primary);padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:700"><i class="fas fa-check"></i></div>' : ''}
