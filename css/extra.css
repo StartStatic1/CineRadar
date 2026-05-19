@@ -1,0 +1,32 @@
+
+/* Botão assistido ativo */
+.btn-watched-active {
+    background: var(--accent) !important;
+    color: var(--bg-primary) !important;
+}
+.btn-watched-active i {
+    color: var(--bg-primary) !important;
+}
+
+/* Footer nav ajuste para não levantar */
+.footer-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px 4px;
+    min-height: 56px;
+    justify-content: flex-end;
+}
+.footer-nav-item span {
+    line-height: 1.2;
+    max-width: 60px;
+    text-align: center;
+}
+
+/* Clips carousel scrollbar hide */
+.clips-carousel::-webkit-scrollbar { display: none; }
+.clips-carousel { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Clip card hover */
+.clip-card:hover { transform: scale(1.03); transition: transform 0.2s ease; }
