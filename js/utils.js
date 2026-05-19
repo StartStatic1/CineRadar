@@ -18,7 +18,9 @@ function formatRating(r) {
 }
 
 function getImageUrl(path, size = 'w342') {
-    return path ? `${CONFIG.TMDB_IMAGE_URL}/${size}${path}` : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="342" height="513"><rect fill="%23181818" width="342" height="513"/><text fill="%23666" x="50%" y="50%" text-anchor="middle" font-size="16">Sem Imagem</text></svg>';
+    if (path) return `${CONFIG.TMDB_IMAGE_URL}/${size}${path}`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="342" height="513"><rect fill="#181818" width="342" height="513"/><text fill="#666" x="50%" y="50%" text-anchor="middle" font-size="16">Sem Imagem</text></svg>`;
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 }
 
 function getBackdropUrl(path, size = 'w1280') {
@@ -50,4 +52,16 @@ function getRelativeDate(dateStr) {
     if (diff > 1 && diff <= 7) return `Em ${diff} dias`;
     if (diff < -1 && diff >= -7) return `Há ${Math.abs(diff)} dias`;
     return formatDate(dateStr);
+}
+
+// Helper: formata preço do Watchmode
+function formatPrice(price) {
+    if (!price) return '';
+    return price < 10 ? `R$ ${price.toFixed(2).replace('.', ',')}` : `R$ ${price.toFixed(0)}`;
+}
+
+// Helper: tipo de disponibilidade traduzido
+function getSourceTypeLabel(type) {
+    const labels = { sub: 'Streaming', rent: 'Alugar', buy: 'Comprar', free: 'Grátis', tve: 'TV App' };
+    return labels[type] || type;
 }

@@ -1,16 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎬 CineRadar iniciando...');
-    console.log('API_BASE:', CONFIG.API_BASE);
-    console.log('TMDB_KEY configurada:', CONFIG.TMDB_API_KEY ? 'SIM' : 'NÃO (usando proxy)');
+    console.log('TMDB_KEY configurada:', CONFIG.TMDB_API_KEY && !CONFIG.TMDB_API_KEY.includes('SUA_') && !CONFIG.TMDB_API_KEY.includes('COLE_') ? 'SIM ✅' : 'NÃO ❌ - Cole em js/config.js');
 
     Navbar.render();
     FooterNav.render();
     Router.init();
-
-    // Teste rápido de conectividade
-    fetch(CONFIG.API_BASE + '/onde-assistir.js?endpoint=trending&type=movie&page=1')
-        .then(r => console.log('✅ Proxy OK:', r.status))
-        .catch(e => console.log('⚠️ Proxy indisponível:', e.message));
 });
 
 window.MovieCard = MovieCard;
