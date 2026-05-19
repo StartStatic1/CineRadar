@@ -15,3 +15,6 @@ window.MyListPage = MyListPage;
 window.HomePage = HomePage;
 window.DetailsPage = DetailsPage;
 window.Player = Player;
+window.CalendarPage = CalendarPage;
+window.ReelsPage = ReelsPage;
+window.ActorPage = ActorPage;

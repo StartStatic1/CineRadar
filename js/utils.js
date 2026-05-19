@@ -54,11 +54,13 @@ function getRelativeDate(dateStr) {
     return formatDate(dateStr);
 }
 
+// Helper: formata preço do Watchmode
 function formatPrice(price) {
     if (!price) return '';
     return price < 10 ? `R$ ${price.toFixed(2).replace('.', ',')}` : `R$ ${price.toFixed(0)}`;
 }
 
+// Helper: tipo de disponibilidade traduzido
 function getSourceTypeLabel(type) {
     const labels = { sub: 'Streaming', rent: 'Alugar', buy: 'Comprar', free: 'Grátis', tve: 'TV App' };
     return labels[type] || type;

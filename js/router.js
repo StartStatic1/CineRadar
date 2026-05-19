@@ -5,6 +5,8 @@ const Router = {
         '#/search': () => SearchPage.render(),
         '#/mylist': () => MyListPage.render(),
         '#/calendar': () => CalendarPage.render(),
+        '#/reels': () => ReelsPage.render(),
+        '#/actor/:id': (p) => ActorPage.render(p.id),
         '#/details/:type/:id': (p) => DetailsPage.render(p.type, p.id)
     },
 
