@@ -22,5 +22,17 @@ const FooterNav = {
                 `).join('')}
             </nav>
         `;
+
+        // === BOTAO DE ADS ===
+        const inject = () => {
+            if (window.CineAds) {
+                window.CineAds.injectSupportButton();
+            }
+        };
+        inject();
+        // Se ainda nao carregou, tenta de novo em 500ms
+        if (!window.CineAds) {
+            setTimeout(inject, 500);
+        }
     }
 };
