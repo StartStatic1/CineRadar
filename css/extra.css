@@ -1,4 +1,4 @@
-/* ===== PLAYER MODAL FULLSCREEN ===== */
+/* ===== PLAYER MODAL ===== */
 #player-modal {
     position: fixed;
     inset: 0;
@@ -20,7 +20,7 @@
 }
 
 /* Player header */
-#player-overlay > div:first-child {
+.player-header-bar {
     position: absolute;
     top: 0; left: 0; right: 0;
     z-index: 100;
@@ -28,18 +28,21 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
     pointer-events: none;
+    gap: 12px;
 }
 
-#player-overlay > div:first-child > div:first-child {
+.player-header-left {
     display: flex;
     align-items: center;
     gap: 10px;
     pointer-events: auto;
+    flex: 1;
+    min-width: 0;
 }
 
-#player-overlay > div:first-child button {
+.player-header-btn {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -52,17 +55,42 @@
     justify-content: center;
     backdrop-filter: blur(10px);
     transition: background 0.2s ease;
+    flex-shrink: 0;
 }
 
-#player-overlay > div:first-child button:hover {
+.player-header-btn:hover {
     background: rgba(255,255,255,0.25);
 }
 
-#player-overlay > div:first-child button:active {
+.player-header-btn:active {
     transform: scale(0.95);
 }
 
-/* Player body (iframe area) */
+.player-header-title {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player-header-subtitle {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.7rem;
+    margin-top: 2px;
+}
+
+.player-header-source {
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Player body */
 #player-overlay > div:nth-child(2) {
     flex: 1;
     position: relative;
@@ -78,7 +106,7 @@
 }
 
 /* Player loading */
-#player-loading {
+.player-loading-overlay {
     position: absolute;
     inset: 0;
     display: flex;
@@ -91,16 +119,30 @@
     transition: opacity 0.3s ease;
 }
 
-/* Player sources bar */
-#player-overlay > div:last-child {
+.player-loading-overlay p {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+}
+
+.player-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Player sources footer */
+.player-sources-footer {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 100;
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 60%, transparent 100%);
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 60%, transparent 100%);
     backdrop-filter: blur(20px);
-    padding: 16px 12px 28px;
+    padding: 14px 12px 28px;
     border-top: 1px solid rgba(255,255,255,0.05);
     pointer-events: auto;
 }
@@ -128,7 +170,7 @@
 
 .sources-scroll::-webkit-scrollbar { display: none; }
 
-[class^="source-btn-"] {
+.source-btn {
     flex: 0 0 auto;
     scroll-snap-align: start;
     display: flex;
@@ -136,8 +178,10 @@
     align-items: center;
     gap: 4px;
     padding: 10px 14px;
+    background: rgba(255,255,255,0.06);
     border: 1.5px solid rgba(255,255,255,0.1);
     border-radius: 12px;
+    color: rgba(255,255,255,0.6);
     font-size: 0.65rem;
     font-weight: 600;
     min-width: 64px;
@@ -146,18 +190,115 @@
     position: relative;
 }
 
-[class^="source-btn-"] i {
+.source-btn i {
     font-size: 1.1rem;
     transition: color 0.2s ease;
+    color: rgba(255,255,255,0.5);
 }
 
-[class^="source-btn-"]:hover {
+.source-btn:hover {
     transform: translateY(-2px);
     border-color: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
 }
 
-[class^="source-btn-"]:active {
-    transform: scale(0.95);
+.source-btn:hover i {
+    color: rgba(255,255,255,0.8);
+}
+
+.source-btn.active {
+    box-shadow: 0 4px 16px var(--source-color, var(--accent));
+}
+
+.source-btn.active i {
+    color: white;
+}
+
+.source-pulse {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    background: var(--accent, #00d084);
+    border-radius: 50%;
+    animation: pulse-dot 1.5s ease infinite;
+    border: 2px solid #000;
+}
+
+/* ===== EPISODE SELECTOR ===== */
+.season-tab {
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.season-tab:hover {
+    background: var(--bg-hover);
+    border-color: rgba(255,255,255,0.15);
+}
+
+.season-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg-primary);
+}
+
+/* ===== SEASONS LIST (menor na pagina de detalhes) ===== */
+.seasons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.season-card {
+    display: flex;
+    gap: 10px;
+    padding: 8px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+.season-card:hover {
+    background: var(--bg-hover);
+    border-color: rgba(255,255,255,0.08);
+}
+
+.season-card img {
+    width: 60px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.season-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.season-info h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+
+.season-info p {
+    color: var(--text-muted);
+    font-size: 0.75rem;
 }
 
 /* ===== REELS PAGE ===== */
@@ -329,49 +470,6 @@
 .provider-item:hover .provider-icon {
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-
-/* ===== SEASONS LIST ===== */
-.seasons-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.season-card {
-    display: flex;
-    gap: 12px;
-    padding: 10px;
-    background: var(--bg-card);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: var(--transition);
-    border: 1px solid rgba(255,255,255,0.03);
-}
-.season-card:hover {
-    background: var(--bg-hover);
-    border-color: rgba(255,255,255,0.08);
-}
-.season-card img {
-    width: 80px;
-    height: 120px;
-    object-fit: cover;
-    border-radius: var(--radius-sm);
-    flex-shrink: 0;
-}
-.season-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-.season-info h4 {
-    font-size: 0.9rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-.season-info p {
-    color: var(--text-muted);
-    font-size: 0.8rem;
 }
 
 /* ===== DETAIL DIRECTOR ===== */
