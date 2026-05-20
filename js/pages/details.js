@@ -5,12 +5,10 @@ const DetailsPage = {
         Loader.render();
 
         try {
-            // Busca paralela: TMDB + Watchmode + OMDb (silencioso)
             const data = type === 'tv' 
                 ? await API.getTVDetails(id) 
                 : await API.getMovieDetails(id);
 
-            // Watchmode em paralelo (nao bloqueia se falhar)
             let watchmodeSources = null;
             try {
                 const wmId = await API.getWatchmodeId(id, type);
@@ -21,7 +19,6 @@ const DetailsPage = {
                 console.log('Watchmode fallback:', e.message);
             }
 
-            // OMDb em paralelo (silencioso, enriquece dados)
             let omdbData = null;
             try {
                 const imdbId = data.external_ids?.imdb_id || data.imdb_id;
@@ -32,7 +29,6 @@ const DetailsPage = {
                 console.log('OMDb fallback:', e.message);
             }
 
-            // Busca relacionados em paralelo
             let relatedData = null;
             try {
                 relatedData = await API.getSimilar(id, type);
@@ -51,8 +47,6 @@ const DetailsPage = {
             const cast = data.credits?.cast?.slice(0, 12) || [];
             const crew = data.credits?.crew?.filter(c => c.job === 'Director' || c.job === 'Creator').slice(0, 4) || [];
             const tmdbProviders = data['watch/providers']?.results?.[CONFIG.REGION];
-
-            // Sinopse: TMDB ou OMDb (mais completa)
             const overview = data.overview || omdbData?.Plot || 'Sinopse nao disponivel.';
 
             Storage.addToHistory(id, type, title, data.poster_path);
@@ -127,7 +121,7 @@ const DetailsPage = {
 
                         ${data.seasons ? `
                             <div class="sinopse-section">
-                                <h3>Temporadas (${data.seasons.length})</h3>
+                                <h3>Temporadas</h3>
                                 <div class="seasons-list">
                                     ${data.seasons.filter(s => s.season_number > 0).map(s => `
                                         <div class="season-card" onclick="Player.open(${id}, 'tv', '${title.replace(/'/g, "\\'")}', ${s.season_number}, 1)">
@@ -157,7 +151,7 @@ const DetailsPage = {
         const items = relatedData.results.slice(0, 10);
         return `
             <div class="sinopse-section">
-                <h3><i class="fas fa-photo-video" style="color:var(--accent)"></i> Relacionados</h3>
+                <h3><i class="fas fa-photo-video" style="color:var(--accent); margin-right:8px;"></i>Relacionados</h3>
                 <div class="carousel-container">
                     ${items.map(i => MovieCard.render(i)).join('')}
                 </div>
@@ -168,7 +162,6 @@ const DetailsPage = {
     renderProviders(tmdbProviders, watchmodeSources) {
         const merged = new Map();
 
-        // TMDB providers
         if (tmdbProviders) {
             const cats = [
                 ['flatrate', 'stream'],
@@ -193,7 +186,6 @@ const DetailsPage = {
             });
         }
 
-        // Watchmode sources enriquece com precos e links
         if (watchmodeSources && Array.isArray(watchmodeSources)) {
             watchmodeSources.forEach(s => {
                 const nameLower = s.name?.toLowerCase() || '';
