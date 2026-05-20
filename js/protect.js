@@ -67,20 +67,27 @@
         }
     }, true);
 
-    // 6. Bloqueia popups e redirecionamentos de iframes (ads dos players)
-    // Isso intercepta window.open e location changes dentro do iframe
+    // 6. Bloqueia popups automaticos, mas PERMITE cliques do usuario (trailer, links)
+    let userGesture = false;
+    document.addEventListener('click', () => {
+        userGesture = true;
+        setTimeout(() => userGesture = false, 1000);
+    }, true);
+
     const originalOpen = window.open;
     window.open = function(url, target, features) {
-        // So permite popups se forem iniciados pelo usuario (clique direto)
-        // Bloqueia popups automaticos de ads
-        console.log('[CineRadar] Popup bloqueado:', url);
+        // Se o usuario clicou, deixa abrir (trailer, links legitimos)
+        if (userGesture) {
+            return originalOpen.apply(window, arguments);
+        }
+        // Se foi popup automatico de ad, bloqueia
+        console.log('[CineRadar] Popup automatico bloqueado:', url);
         return null;
     };
 
     // 7. Bloqueia beforeunload (quando ads tentam impedir fechar a pagina)
     window.addEventListener('beforeunload', function(e) {
         // So permite se o usuario estiver saindo intencionalmente
-        // (nao bloqueia o fechar normal da pagina)
     });
 
     // 8. CSS para desabilitar selecao
