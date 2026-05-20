@@ -1,4 +1,8 @@
 const HomePage = {
+    heroInterval: null,
+    heroItems: [],
+    currentHeroIndex: 0,
+
     async render() {
         const main = $('#main-content');
         if (!main) return;
@@ -7,32 +11,56 @@ const HomePage = {
         try {
             // Busca paralela de todos os dados
             const [trending, upcoming, popularMovies, popularTV, nowPlaying, topRatedMovies] = await Promise.all([
-                API.getTrending('all', 1).catch(() => ({ results: [] })),
-                API.getUpcoming(1).catch(() => ({ results: [] })),
-                API.getPopularMovies(1).catch(() => ({ results: [] })),
-                API.getPopularTV(1).catch(() => ({ results: [] })),
-                API.getNowPlaying(1).catch(() => ({ results: [] })),
-                API.getTopRated('movie', 1).catch(() => ({ results: [] }))
+                API.getTrending('all', 1).catch(e => { console.log('Trending error:', e); return { results: [] }; }),
+                API.getUpcoming(1).catch(e => { console.log('Upcoming error:', e); return { results: [] }; }),
+                API.getPopularMovies(1).catch(e => { console.log('Popular movies error:', e); return { results: [] }; }),
+                API.getPopularTV(1).catch(e => { console.log('Popular TV error:', e); return { results: [] }; }),
+                API.getNowPlaying(1).catch(e => { console.log('Now playing error:', e); return { results: [] }; }),
+                API.getTopRated('movie', 1).catch(e => { console.log('Top rated error:', e); return { results: [] }; })
             ]);
 
-            if (!trending.results || !trending.results.length) {
-                throw new Error('Sem dados - verifique sua API Key nas Environment Variables');
+            // Coleta hero items de várias fontes para rotação
+            this.heroItems = [];
+
+            // Prioridade 1: Now Playing (filmes em cartaz)
+            if (nowPlaying.results && nowPlaying.results.length) {
+                this.heroItems.push(...nowPlaying.results.slice(0, 3).map(i => ({...i, media_type: 'movie', heroTag: 'Nos Cinemas'})));
             }
 
-            const heroItem = trending.results[0];
-            const heroType = heroItem.media_type || 'movie';
+            // Prioridade 2: Trending
+            if (trending.results && trending.results.length) {
+                const trendingItems = trending.results
+                    .filter(i => i.media_type !== 'person')
+                    .slice(0, 3)
+                    .map(i => ({...i, heroTag: 'Top da Semana'}));
+                this.heroItems.push(...trendingItems);
+            }
+
+            // Prioridade 3: Upcoming
+            if (upcoming.results && upcoming.results.length) {
+                this.heroItems.push(...upcoming.results.slice(0, 2).map(i => ({...i, media_type: 'movie', heroTag: 'Em Breve'})));
+            }
+
+            // Remove duplicados por ID
+            this.heroItems = this.heroItems.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+
+            if (!this.heroItems.length) {
+                throw new Error('Sem dados - verifique sua API Key nas Environment Variables');
+            }
 
             // Busca seções por provider em paralelo (silencioso, não bloqueia)
             const providerSections = await this.loadProviderSections();
 
             main.innerHTML = `
                 <div class="home-page">
-                    ${this.renderHero(heroItem, heroType)}
+                    <div id="hero-container">
+                        ${this.renderHero(this.heroItems[0], this.heroItems[0].media_type || 'movie')}
+                    </div>
 
                     <div class="container">
                         ${this.renderProviderStrip()}
 
-                        ${Carousel.render('Top 10 em Alta', trending.results.slice(1, 11), { 
+                        ${Carousel.render('Top 10 em Alta', trending.results ? trending.results.slice(1, 11) : [], { 
                             icon: 'fire', 
                             link: '#/explore?trending=1', 
                             showNumbers: true 
@@ -40,35 +68,39 @@ const HomePage = {
 
                         ${providerSections}
 
-                        ${nowPlaying.results.length ? Carousel.render('Nos Cinemas', nowPlaying.results.slice(0, 10), { 
+                        ${nowPlaying.results && nowPlaying.results.length ? Carousel.render('Nos Cinemas', nowPlaying.results.slice(0, 10), { 
                             icon: 'ticket-alt', 
                             link: '#/explore?type=movie' 
                         }) : ''}
 
-                        ${upcoming.results.length ? Carousel.render('Lançamentos', upcoming.results.slice(0, 10), { 
+                        ${upcoming.results && upcoming.results.length ? Carousel.render('Lançamentos', upcoming.results.slice(0, 10), { 
                             icon: 'calendar', 
                             link: '#/calendar' 
                         }) : ''}
 
-                        ${popularMovies.results.length ? Carousel.render('Filmes Populares', popularMovies.results.slice(0, 10), { 
+                        ${popularMovies.results && popularMovies.results.length ? Carousel.render('Filmes Populares', popularMovies.results.slice(0, 10), { 
                             icon: 'film', 
                             link: '#/explore?type=movie', 
                             big: true 
                         }) : ''}
 
-                        ${popularTV.results.length ? Carousel.render('Séries em Alta', popularTV.results.slice(0, 10), { 
+                        ${popularTV.results && popularTV.results.length ? Carousel.render('Séries em Alta', popularTV.results.slice(0, 10), { 
                             icon: 'tv', 
                             link: '#/explore?type=tv', 
                             big: true 
                         }) : ''}
 
-                        ${topRatedMovies.results.length ? Carousel.render('Melhores Avaliados', topRatedMovies.results.slice(0, 10), { 
+                        ${topRatedMovies.results && topRatedMovies.results.length ? Carousel.render('Melhores Avaliados', topRatedMovies.results.slice(0, 10), { 
                             icon: 'star', 
                             link: '#/explore?type=movie' 
                         }) : ''}
                     </div>
                 </div>
             `;
+
+            // Inicia rotação do hero
+            this.startHeroRotation();
+
         } catch (err) {
             console.error('HomePage error:', err);
             main.innerHTML = `
@@ -95,20 +127,45 @@ const HomePage = {
         }
     },
 
-    // Hero SEM botão "Assistir" (só Salvar e Info como no IndicaAí)
+    startHeroRotation() {
+        // Limpa interval anterior
+        if (this.heroInterval) clearInterval(this.heroInterval);
+
+        if (this.heroItems.length <= 1) return;
+
+        this.heroInterval = setInterval(() => {
+            this.currentHeroIndex = (this.currentHeroIndex + 1) % this.heroItems.length;
+            const item = this.heroItems[this.currentHeroIndex];
+            const type = item.media_type || 'movie';
+
+            const heroContainer = $('#hero-container');
+            if (heroContainer) {
+                heroContainer.innerHTML = this.renderHero(item, type);
+                // Re-aplica event listeners
+                this.attachHeroEvents(item, type);
+            }
+        }, 8000); // Muda a cada 8 segundos
+    },
+
+    attachHeroEvents(item, type) {
+        // Event listeners são inline no HTML
+    },
+
     renderHero(item, type) {
         const title = item.title || item.name || 'Sem título';
         const backdrop = getBackdropUrl(item.backdrop_path, 'w1280');
         const year = (item.release_date || item.first_air_date || '').substring(0, 4);
+        const heroTag = item.heroTag || (type === 'movie' ? 'Filme' : 'Série');
 
         return `
-            <div class="hero">
+            <div class="hero" id="active-hero">
                 <div class="hero-bg">
                     <img src="${backdrop}" alt="${title}" 
                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjcyMCI+PHJlY3QgZmlsbD0iIzEyMTIxMiIgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIi8+PC9zdmc+'">
                 </div>
                 <div class="hero-overlay"></div>
                 <div class="hero-content">
+                    <div class="hero-badge">${heroTag}</div>
                     <h1>${title}</h1>
                     <div class="hero-meta">
                         <span class="rating">
@@ -130,8 +187,30 @@ const HomePage = {
                         </button>
                     </div>
                 </div>
+                ${this.heroItems.length > 1 ? `
+                <div class="hero-dots">
+                    ${this.heroItems.map((_, i) => `
+                        <div class="hero-dot ${i === this.currentHeroIndex ? 'active' : ''}" onclick="HomePage.goToHero(${i})"></div>
+                    `).join('')}
+                </div>
+                ` : ''}
             </div>
         `;
+    },
+
+    goToHero(index) {
+        this.currentHeroIndex = index;
+        const item = this.heroItems[index];
+        const type = item.media_type || 'movie';
+
+        const heroContainer = $('#hero-container');
+        if (heroContainer) {
+            heroContainer.innerHTML = this.renderHero(item, type);
+        }
+
+        // Reinicia o timer
+        if (this.heroInterval) clearInterval(this.heroInterval);
+        this.startHeroRotation();
     },
 
     renderProviderStrip() {
@@ -141,7 +220,9 @@ const HomePage = {
                 ${providers.map(p => `
                     <div class="provider-item" onclick="Router.navigate('#/explore?provider=${p.id}')">
                         <div class="provider-icon" style="background:transparent;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden">
-                            <img src="${p.logo}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:4px" onerror="this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=\'color:white;font-weight:800;font-size:0.75rem\'>${p.name.substring(0,2)}</span>'">
+                            <img src="${p.logo}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:4px" 
+                                onerror="this.onerror=null; this.src='${p.fallbackLogo || ''}'; 
+                                    if(!this.src||this.src==='null'){this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=color:white;font-weight:800;font-size:0.75rem>${p.name.substring(0,2)}</span>'}">
                         </div>
                         <span>${p.name}</span>
                     </div>
@@ -170,7 +251,9 @@ const HomePage = {
                         <div class="provider-section">
                             <div class="provider-section-header">
                                 <h2 class="provider-section-title">
-                                    <img src="${provider.logo}" alt="${provider.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-tv\'></i> ${provider.name}'">
+                                    <img src="${provider.logo}" alt="${provider.name}" 
+                                        onerror="this.onerror=null; this.src='${provider.fallbackLogo || ''}'; 
+                                            if(!this.src||this.src==='null'){this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-tv\'></i> ${provider.name}'}">
                                     Top ${provider.name}
                                 </h2>
                                 <a href="#/explore?provider=${provider.id}&type=${p.type}" class="section-link">Ver todos <i class="fas fa-chevron-right"></i></a>
