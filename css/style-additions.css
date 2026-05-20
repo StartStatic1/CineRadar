@@ -1,0 +1,500 @@
+
+/* ==========================================
+   BOTTOM SHEET DE PLAYERS
+   ========================================== */
+.player-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.player-sheet.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.player-sheet-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+}
+
+.player-sheet-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    border-radius: 20px 20px 0 0;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+}
+.player-sheet.open .player-sheet-content {
+    transform: translateY(0);
+}
+
+.player-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    margin: 12px auto 8px;
+}
+
+.player-sheet-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 8px 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.player-sheet-title {
+    color: white;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.player-sheet-subtitle {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 2px;
+}
+
+.player-sheet-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+/* Audio tabs */
+.player-sheet-audio {
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.audio-tabs {
+    display: flex;
+    gap: 8px;
+}
+
+.audio-tab {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.audio-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+/* Source chips */
+.player-sheet-sources {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.player-sheet-sources::-webkit-scrollbar {
+    display: none;
+}
+
+.source-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.7);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    position: relative;
+}
+.source-chip i {
+    font-size: 0.75rem;
+}
+.source-chip.active {
+    background: rgba(255,255,255,0.08);
+}
+
+.chip-pulse {
+    position: absolute;
+    inset: -2px;
+    border-radius: 20px;
+    border: 2px solid currentColor;
+    opacity: 0.3;
+    animation: chipPulse 1.5s ease-out infinite;
+}
+@keyframes chipPulse {
+    0% { transform: scale(1); opacity: 0.4; }
+    100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* Iframe no sheet */
+.player-sheet-iframe-wrap {
+    flex: 1;
+    min-height: 220px;
+    position: relative;
+    background: #000;
+}
+
+#sheet-iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    border: none;
+    display: block;
+}
+
+.sheet-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #000;
+    z-index: 2;
+    transition: opacity 0.3s;
+}
+.sheet-loading p {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.sheet-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* ==========================================
+   SELETOR DE TEMPORADAS/EPISODIOS
+   ========================================== */
+.seasons-section {
+    margin-top: 8px;
+}
+
+.season-tabs-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 16px;
+    scrollbar-width: none;
+}
+.season-tabs-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.season-tab {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.season-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+/* Lista de episodios */
+.episodes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.episode-row {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.03);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.episode-row:hover {
+    background: var(--bg-hover);
+    border-color: rgba(255,255,255,0.08);
+}
+
+.episode-thumb {
+    width: 120px;
+    height: 68px;
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+.episode-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.ep-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    font-size: 1.2rem;
+}
+.ep-play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.35);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.ep-play-overlay i {
+    color: white;
+    font-size: 1.4rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+.episode-row:hover .ep-play-overlay {
+    opacity: 1;
+}
+
+.episode-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+.episode-number {
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+.episode-name {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.episode-meta {
+    display: flex;
+    gap: 10px;
+    margin-top: 3px;
+}
+.episode-meta span {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+.episode-overview {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    margin-top: 4px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.episodes-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+.episodes-empty i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    display: block;
+}
+.episodes-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 12px;
+    color: var(--text-muted);
+}
+
+/* ==========================================
+   FIX: PLAYER HEADER E SOURCES BAR
+   ========================================== */
+.player-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    z-index: 10;
+}
+.player-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.player-header-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+.player-header-title {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.player-header-subtitle {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-top: 1px;
+}
+.player-header-source {
+    font-size: 0.75rem;
+    margin-top: 2px;
+    font-weight: 600;
+}
+
+.player-sources-footer {
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.sources-label {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sources-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.sources-scroll::-webkit-scrollbar {
+    display: none;
+}
+.source-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.6);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    position: relative;
+}
+.source-btn i {
+    font-size: 0.75rem;
+}
+.source-pulse {
+    position: absolute;
+    inset: -2px;
+    border-radius: 20px;
+    border: 2px solid currentColor;
+    opacity: 0.3;
+    animation: chipPulse 1.5s ease-out infinite;
+}
+
+.player-loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: #000;
+    z-index: 5;
+    transition: opacity 0.3s;
+}
+.player-loading-overlay p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.player-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
