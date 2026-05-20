@@ -1,22 +1,23 @@
-/* ===== PLAYER SOURCES BAR (estilo IndicaAí) ===== */
+
+/* ===== PLAYER SOURCES BAR - CORES CORRIGIDAS ===== */
 .player-sources-bar {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(10,10,10,0.9) 60%, transparent 100%);
+    background: linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(10,10,10,0.95) 70%, rgba(20,20,20,0.8) 100%);
     backdrop-filter: blur(20px);
-    padding: 16px 12px 24px;
-    z-index: 10;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 14px 12px 28px;
+    z-index: 20;
+    border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 .sources-label {
     font-size: 0.7rem;
     font-weight: 700;
-    color: var(--text-muted);
+    color: rgba(255,255,255,0.5);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -42,10 +43,10 @@
     align-items: center;
     gap: 4px;
     padding: 10px 14px;
-    background: rgba(255,255,255,0.05);
-    border: 1.5px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.1);
     border-radius: var(--radius-md);
-    color: var(--text-secondary);
+    color: rgba(255,255,255,0.7);
     font-size: 0.65rem;
     font-weight: 600;
     min-width: 64px;
@@ -54,12 +55,21 @@
     cursor: pointer;
 }
 
-.source-btn i { font-size: 1.1rem; transition: var(--transition); }
+.source-btn i { 
+    font-size: 1.1rem; 
+    transition: var(--transition); 
+    color: rgba(255,255,255,0.6);
+}
 
 .source-btn:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.2);
     transform: translateY(-2px);
+    color: rgba(255,255,255,0.9);
+}
+
+.source-btn:hover i {
+    color: rgba(255,255,255,0.9);
 }
 
 .source-btn.active {
@@ -69,7 +79,9 @@
     box-shadow: 0 4px 16px var(--source-color);
 }
 
-.source-btn.active i { color: white; }
+.source-btn.active i { 
+    color: white; 
+}
 
 .source-pulse {
     position: absolute;
@@ -134,11 +146,89 @@
     border: none;
     cursor: pointer;
     transition: var(--transition);
+    flex-shrink: 0;
 }
 
 .player-close-btn:hover {
     background: var(--danger);
     color: white;
+}
+
+/* ===== PLAYER MODAL FIX ===== */
+.player-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.98);
+    backdrop-filter: blur(10px);
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.player-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.player-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+    z-index: 11;
+    gap: 12px;
+}
+
+.player-modal-header h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.player-title-text {
+    color: var(--text-primary);
+}
+
+.player-modal-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+}
+
+.player-modal-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    position: absolute;
+    inset: 0;
+}
+
+@media (min-width: 768px) {
+    .player-modal-body {
+        padding: 20px;
+    }
+    .player-modal-body iframe {
+        position: relative;
+        max-width: 900px;
+        aspect-ratio: 16/9;
+        height: auto;
+        border-radius: var(--radius-md);
+    }
 }
 
 /* ===== REELS PAGE ===== */
@@ -238,7 +328,7 @@
 /* ===== ACTOR PAGE ===== */
 .actor-page { padding-bottom: 20px; }
 
-/* ===== PROVIDER SECTIONS NA HOME ===== */
+/* ===== PROVIDER SECTIONS ===== */
 .provider-section {
     margin-bottom: 28px;
 }
@@ -267,7 +357,7 @@
     font-size: 0.9rem;
 }
 
-/* ===== CAST LINKS (clicáveis para ator) ===== */
+/* ===== CAST LINKS ===== */
 .cast-item {
     cursor: pointer;
     transition: var(--transition);
@@ -282,7 +372,7 @@
     transition: var(--transition);
 }
 
-/* ===== FIX: Botões ativos mudam de cor ===== */
+/* ===== FIX: Botoes ativos mudam de cor ===== */
 .card-actions button.active {
     background: var(--accent) !important;
     color: var(--bg-primary) !important;
@@ -302,7 +392,7 @@
     color: var(--bg-primary) !important;
 }
 
-/* ===== FIX: Ícones de streaming mais nítidos ===== */
+/* ===== FIX: Icones de streaming mais nitidos ===== */
 .provider-icon img {
     filter: none !important;
     opacity: 1 !important;
@@ -409,7 +499,7 @@
     letter-spacing: 1px;
 }
 
-/* ===== FOOTER NAV FIX - Ícone não sobe ===== */
+/* ===== FOOTER NAV FIX ===== */
 .footer-nav-item {
     display: flex;
     flex-direction: column;
@@ -457,71 +547,12 @@
     transform: scale(0.95);
 }
 
-/* ===== PLAYER MODAL FIX - Sem interface de terceiros ===== */
-.player-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.98);
-    backdrop-filter: blur(10px);
-    z-index: 3000;
-    display: flex;
-    flex-direction: column;
-    opacity: 0;
-    visibility: hidden;
-    transition: var(--transition);
+/* ===== EXPLORE PAGE TOP PROVIDER ===== */
+.explore-page .provider-section {
+    animation: fadeIn 0.4s ease;
 }
 
-.player-modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.player-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    flex-shrink: 0;
-    z-index: 11;
-}
-
-.player-modal-header h3 {
-    font-size: 0.95rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.player-modal-body {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.player-modal-body iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    position: absolute;
-    inset: 0;
-}
-
-@media (min-width: 768px) {
-    .player-modal-body {
-        padding: 20px;
-    }
-    .player-modal-body iframe {
-        position: relative;
-        max-width: 900px;
-        aspect-ratio: 16/9;
-        height: auto;
-        border-radius: var(--radius-md);
-    }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
