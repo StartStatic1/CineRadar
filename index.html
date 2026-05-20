@@ -46,70 +46,88 @@
     <!-- Footer Nav -->
     <div id="footer-container"></div>
 
-    <!-- ===== GATE DE ACESSO ===== -->
+    <!-- ===== GATE DE ACESSO - ESTILO CINERADAR ===== -->
     <div id="cine-gate-overlay" style="
         display: none;
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.92);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: rgba(10,10,10,0.88);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         z-index: 99999;
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        padding: 16px;
         font-family: 'Inter', sans-serif;
     ">
         <div style="
-            background: #141414;
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 32px 24px;
-            max-width: 340px;
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 24px;
+            padding: 28px 22px 22px;
+            max-width: 300px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.9);
-            animation: gateSlideUp 0.4s ease;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(229,9,20,0.1);
+            animation: gatePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         ">
+            <!-- Icone animado -->
             <div style="
-                width: 64px;
-                height: 64px;
-                background: rgba(229,9,20,0.15);
-                border-radius: 50%;
+                width: 56px;
+                height: 56px;
+                background: rgba(229,9,20,0.12);
+                border-radius: 16px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin: 0 auto 20px;
-                font-size: 28px;
-                color: #e50914;
-            ">🔒</div>
+                margin: 0 auto 16px;
+                font-size: 26px;
+                animation: gateIconPulse 2s ease infinite;
+            ">🍿</div>
 
             <h2 style="
-                margin: 0 0 8px;
-                font-size: 20px;
+                margin: 0 0 6px;
+                font-size: 18px;
                 font-weight: 800;
                 color: #fff;
                 letter-spacing: -0.3px;
-            ">Acesso Premium</h2>
+            ">Sessão Especial</h2>
 
             <p style="
-                margin: 0 0 24px;
-                font-size: 14px;
-                color: #aaa;
-                line-height: 1.6;
+                margin: 0 0 20px;
+                font-size: 13px;
+                color: #888;
+                line-height: 1.5;
             ">
-                Desbloqueie <strong style="color:#fff">5 horas</strong> de acesso sem interrupcoes.<br>
-                Clique no botao abaixo para continuar.
+                Desbloqueie <strong style="color:#e50914">5 horas</strong> de streaming sem paradas.
             </p>
 
+            <!-- Timer (inicialmente escondido) -->
+            <div id="cine-gate-timer" style="
+                display: none;
+                margin-bottom: 16px;
+                padding: 10px 14px;
+                background: rgba(0,255,136,0.06);
+                border: 1px solid rgba(0,255,136,0.12);
+                border-radius: 12px;
+            ">
+                <div style="font-size:11px;color:#00ff88;margin-bottom:2px">
+                    <i class="fas fa-check-circle"></i> Liberado
+                </div>
+                <div style="font-size:16px;font-weight:800;color:#00ff88;font-variant-numeric:tabular-nums" id="cine-gate-countdown">
+                    05:00:00
+                </div>
+            </div>
+
+            <!-- Botao -->
             <a id="cine-gate-unlock" href="https://omg10.com/4/11031110" target="_blank" style="
                 width: 100%;
-                padding: 14px 20px;
+                padding: 13px 18px;
                 background: #e50914;
                 color: #fff;
                 border: none;
-                border-radius: 12px;
-                font-size: 15px;
+                border-radius: 14px;
+                font-size: 14px;
                 font-weight: 700;
                 font-family: 'Inter', sans-serif;
                 cursor: pointer;
@@ -118,43 +136,31 @@
                 justify-content: center;
                 gap: 8px;
                 text-decoration: none;
-                box-shadow: 0 4px 16px rgba(229,9,20,0.4);
+                box-shadow: 0 4px 20px rgba(229,9,20,0.35);
+                transition: transform 0.15s, box-shadow 0.15s;
             ">
-                <i class="fas fa-unlock" style="font-size:13px"></i>
-                Desbloquear Acesso
+                <i class="fas fa-play" style="font-size:11px"></i>
+                Assistir Agora
             </a>
 
-            <div id="cine-gate-timer" style="
-                display: none;
-                margin-top: 16px;
-                padding: 12px;
-                background: rgba(0,255,136,0.08);
-                border: 1px solid rgba(0,255,136,0.15);
-                border-radius: 10px;
-            ">
-                <div style="font-size:12px;color:#00ff88;margin-bottom:4px">
-                    <i class="fas fa-check-circle"></i> Acesso liberado
-                </div>
-                <div style="font-size:18px;font-weight:800;color:#00ff88;font-variant-numeric:tabular-nums" id="cine-gate-countdown">
-                    05:00:00
-                </div>
-                <div style="font-size:11px;color:#666;margin-top:2px">restando</div>
-            </div>
-
             <p style="
-                margin: 20px 0 0;
-                font-size: 11px;
-                color: #555;
+                margin: 14px 0 0;
+                font-size: 10px;
+                color: #444;
             ">
-                CineRadar - Streaming Guide
+                CineRadar 🎬 Streaming Guide
             </p>
         </div>
     </div>
 
     <style>
-        @keyframes gateSlideUp {
-            from { opacity: 0; transform: translateY(30px) scale(0.95); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes gatePop {
+            from { opacity: 0; transform: scale(0.85) translateY(20px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes gateIconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
         #cine-gate-overlay.active {
             display: flex !important;
@@ -163,6 +169,10 @@
             overflow: hidden !important;
             height: 100vh !important;
             touch-action: none !important;
+        }
+        #cine-gate-unlock:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 10px rgba(229,9,20,0.3);
         }
     </style>
 
@@ -226,12 +236,16 @@
             var unlockBtn = document.getElementById('cine-gate-unlock');
 
             if (timerBox) timerBox.style.display = 'block';
-            if (unlockBtn) unlockBtn.style.display = 'none';
+            if (unlockBtn) {
+                unlockBtn.innerHTML = '<i class="fas fa-check" style="font-size:11px"></i> Liberado!';
+                unlockBtn.style.background = '#00ff88';
+                unlockBtn.style.boxShadow = '0 4px 20px rgba(0,255,136,0.3)';
+            }
 
-            // Libera o app apos 2 segundos
+            // Libera o app apos 1.5 segundos
             setTimeout(function() {
                 hideGate();
-            }, 2000);
+            }, 1500);
 
             // Atualiza o timer em background
             var interval = setInterval(function() {
@@ -248,13 +262,8 @@
         function initGate() {
             var unlockBtn = document.getElementById('cine-gate-unlock');
             if (unlockBtn) {
-                // O link ja abre o ad em nova aba (href + target="_blank")
-                // Aqui so adicionamos o salvamento do unlock
                 unlockBtn.addEventListener('click', function(e) {
-                    // Nao previne default - deixa o link abrir normal
-                    // Mas marca como desbloqueado
                     setUnlockTime();
-                    // Mostra timer e libera
                     showTimerAndHide();
                 });
             }
