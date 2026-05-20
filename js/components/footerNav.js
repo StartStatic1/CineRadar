@@ -1,13 +1,13 @@
 const FooterNav = {
     render() {
-        const c = $('#footer-container');
+        const c = document.getElementById('footer-container');
         if (!c) return;
         const route = window.location.hash || '#/home';
 
         const items = [
-            { path: '#/home', icon: 'fa-home', label: 'Início' },
+            { path: '#/home', icon: 'fa-home', label: 'Inicio' },
             { path: '#/explore', icon: 'fa-compass', label: 'Explorar' },
-            { path: '#/calendar', icon: 'fa-calendar-alt', label: 'Lançamentos' },
+            { path: '#/reels', icon: 'fa-film', label: 'Reels' },
             { path: '#/mylist', icon: 'fa-bookmark', label: 'Minha Lista' },
             { path: '#/search', icon: 'fa-search', label: 'Buscar' }
         ];
