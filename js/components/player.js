@@ -7,7 +7,6 @@ const Player = {
     activePlayerIndex: parseInt(localStorage.getItem('cineradar_player') || '0'),
     playerHistory: JSON.parse(localStorage.getItem('cineradar_player_history') || '[]'),
 
-    // Garante que o container do modal existe no DOM
     ensureModalContainer() {
         let modal = document.getElementById('player-modal');
         if (!modal) {
@@ -19,7 +18,14 @@ const Player = {
         return modal;
     },
 
-    open(id, type, title, season = null, episode = null) {
+    // Abre o player. Para series, primeiro mostra seletor de temporada/episodio
+    async open(id, type, title, season = null, episode = null) {
+        // Se for serie e nao tiver season/episode definidos, mostra seletor primeiro
+        if (type === 'tv' && (season === null || episode === null)) {
+            await this.showEpisodeSelector(id, title);
+            return;
+        }
+
         this.currentId = id;
         this.currentType = type;
         this.currentTitle = title;
@@ -30,7 +36,6 @@ const Player = {
         const player = CONFIG.PLAYERS[this.activePlayerIndex];
         const url = player.getUrl(id, type, season, episode);
 
-        // Cria o overlay do modal
         modal.innerHTML = `
             <div id="player-overlay" style="
                 position:fixed;
@@ -42,154 +47,91 @@ const Player = {
                 opacity:0;
                 transition:opacity 0.3s ease;
             ">
-                <!-- Header fixo no topo -->
-                <div style="
-                    position:absolute;
-                    top:0; left:0; right:0;
-                    z-index:100;
-                    padding:12px 16px;
-                    display:flex;
-                    align-items:center;
-                    justify-content:space-between;
-                    background:linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
-                    pointer-events:none;
-                ">
-                    <div style="display:flex;align-items:center;gap:10px;pointer-events:auto;">
-                        <button onclick="Player.close()" style="
-                            width:36px; height:36px; border-radius:50%;
-                            background:rgba(255,255,255,0.15); border:none;
-                            color:white; cursor:pointer; display:flex;
-                            align-items:center; justify-content:center;
-                            backdrop-filter:blur(10px);
-                        ">
-                            <i class="fas fa-arrow-left" style="font-size:1rem"></i>
+                <!-- Header -->
+                <div class="player-header-bar">
+                    <div class="player-header-left">
+                        <button onclick="Player.close()" class="player-header-btn">
+                            <i class="fas fa-arrow-left"></i>
                         </button>
                         <div>
-                            <div style="color:white; font-size:0.85rem; font-weight:600;">${title}</div>
-                            <div style="color:${player.color}; font-size:0.7rem; font-weight:700;">
-                                <i class="fas ${player.icon}" style="margin-right:4px"></i>${player.name}
+                            <div class="player-header-title">${title}</div>
+                            ${type === 'tv' && season ? `<div class="player-header-subtitle">T${season} · E${episode}</div>` : ''}
+                            <div class="player-header-source" style="color:${player.color}">
+                                <i class="fas ${player.icon}"></i> ${player.name}
                             </div>
                         </div>
                     </div>
-                    <div style="pointer-events:auto;">
-                        <button onclick="Player.close()" style="
-                            width:36px; height:36px; border-radius:50%;
-                            background:rgba(255,255,255,0.15); border:none;
-                            color:white; cursor:pointer; display:flex;
-                            align-items:center; justify-content:center;
-                            backdrop-filter:blur(10px);
-                        ">
-                            <i class="fas fa-times" style="font-size:1rem"></i>
-                        </button>
-                    </div>
+                    <button onclick="Player.close()" class="player-header-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
 
-                <!-- Area do iframe (ocupa tudo) -->
+                <!-- Body -->
                 <div style="flex:1; position:relative; background:#000;">
                     <iframe id="player-iframe" src="${url}" 
                         allowfullscreen 
+                        referrerpolicy="no-referrer"
                         style="width:100%; height:100%; border:none; position:absolute; inset:0;"
-                        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation">
-                    </iframe>
+                    ></iframe>
 
-                    <!-- Loading overlay -->
-                    <div id="player-loading" style="
-                        position:absolute; inset:0;
-                        display:flex; flex-direction:column;
-                        align-items:center; justify-content:center;
-                        gap:16px; background:#000; z-index:5;
-                        transition:opacity 0.3s ease;
+                    <div id="player-loading" class="player-loading-overlay">
+                        <div class="player-spinner" style="border-top-color:${player.color}"></div>
+                        <p>Carregando <span style="color:${player.color}; font-weight:700;">${player.name}</span>...</p>
+                    </div>
+
+                    <!-- Overlay de erro -->
+                    <div id="player-error" style="
+                        display:none; position:absolute; inset:0;
+                        flex-direction:column; align-items:center; justify-content:center;
+                        gap:16px; background:#000; z-index:10; padding:20px; text-align:center;
                     ">
-                        <div style="
-                            width:48px; height:48px;
-                            border:3px solid rgba(255,255,255,0.1);
-                            border-top-color:${player.color};
-                            border-radius:50%;
-                            animation:spin 1s linear infinite;
-                        "></div>
-                        <p style="color:rgba(255,255,255,0.6); font-size:0.85rem;">
-                            Carregando <span style="color:${player.color}; font-weight:700;">${player.name}</span>...
-                        </p>
+                        <i class="fas fa-exclamation-triangle" style="color:var(--danger); font-size:3rem;"></i>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">Erro ao carregar esta fonte.</p>
+                        <p style="color:var(--text-muted); font-size:0.8rem;">Tente outra fonte abaixo.</p>
                     </div>
                 </div>
 
-                <!-- Barra de fontes no rodape (estilo Netflix) -->
-                <div style="
-                    position:absolute;
-                    bottom:0; left:0; right:0;
-                    z-index:100;
-                    background:linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 60%, transparent 100%);
-                    backdrop-filter:blur(20px);
-                    padding:16px 12px 28px;
-                    border-top:1px solid rgba(255,255,255,0.05);
-                    pointer-events:auto;
-                ">
-                    <div style="
-                        font-size:0.65rem; font-weight:700;
-                        color:rgba(255,255,255,0.4);
-                        text-transform:uppercase;
-                        letter-spacing:1.2px;
-                        margin-bottom:10px;
-                        display:flex; align-items:center; gap:6px;
-                    ">
-                        <i class="fas fa-server"></i> Fontes
-                    </div>
-                    <div style="
-                        display:flex; gap:8px;
-                        overflow-x:auto;
-                        scroll-snap-type:x mandatory;
-                        padding-bottom:4px;
-                        -webkit-overflow-scrolling:touch;
-                    " class="sources-scroll">
+                <!-- Sources Bar -->
+                <div id="player-sources-bar" class="player-sources-footer">
+                    <div class="sources-label"><i class="fas fa-server"></i> Fontes</div>
+                    <div class="sources-scroll">
                         ${CONFIG.PLAYERS.map((p, i) => `
-                            <button onclick="Player.switchSource(${i})" style="
-                                flex:0 0 auto;
-                                scroll-snap-align:start;
-                                display:flex; flex-direction:column;
-                                align-items:center; gap:4px;
-                                padding:10px 14px;
-                                background:${i === this.activePlayerIndex ? p.color : 'rgba(255,255,255,0.06)'};
-                                border:1.5px solid ${i === this.activePlayerIndex ? p.color : 'rgba(255,255,255,0.1)'};
-                                border-radius:12px;
-                                color:${i === this.activePlayerIndex ? 'white' : 'rgba(255,255,255,0.6)'};
-                                font-size:0.65rem; font-weight:600;
-                                min-width:64px; cursor:pointer;
-                                transition:all 0.2s ease;
-                                position:relative;
-                                box-shadow:${i === this.activePlayerIndex ? `0 4px 16px ${p.color}40` : 'none'};
-                            " class="source-btn-${i}">
-                                <i class="fas ${p.icon}" style="font-size:1.1rem; color:${i === this.activePlayerIndex ? 'white' : 'rgba(255,255,255,0.5)'};"></i>
+                            <button onclick="Player.switchSource(${i})" 
+                                class="source-btn ${i === this.activePlayerIndex ? 'active' : ''} source-btn-${i}"
+                                style="${i === this.activePlayerIndex ? `background:${p.color}; border-color:${p.color}; color:white; box-shadow:0 4px 16px ${p.color}40;` : ''}">
+                                <i class="fas ${p.icon}" style="${i === this.activePlayerIndex ? 'color:white;' : ''}"></i>
                                 <span>${p.name}</span>
-                                ${i === this.activePlayerIndex ? `
-                                    <div style="
-                                        position:absolute; top:-4px; right:-4px;
-                                        width:10px; height:10px;
-                                        background:var(--accent, #00d084);
-                                        border-radius:50%;
-                                        animation:pulse-dot 1.5s ease infinite;
-                                        border:2px solid #000;
-                                    "></div>
-                                ` : ''}
+                                ${i === this.activePlayerIndex ? '<div class="source-pulse"></div>' : ''}
                             </button>
                         `).join('')}
                     </div>
+                    ${type === 'tv' ? `
+                        <button onclick="Player.showEpisodeSelector(${id}, '${title.replace(/'/g, "\\'")}')" 
+                            style="
+                                margin-top:10px; width:100%; padding:10px;
+                                background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1);
+                                border-radius:10px; color:var(--text-secondary); font-size:0.8rem;
+                                cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+                            ">
+                            <i class="fas fa-list"></i> T${season} · E${episode} — Mudar episodio
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
 
-        // Forca pointer-events
         modal.style.pointerEvents = 'auto';
         document.body.style.overflow = 'hidden';
 
-        // Anima entrada
         requestAnimationFrame(() => {
             const overlay = document.getElementById('player-overlay');
             if (overlay) overlay.style.opacity = '1';
         });
 
-        // Loading handler
+        // Setup iframe
         const iframe = document.getElementById('player-iframe');
         const loading = document.getElementById('player-loading');
+        const errorDiv = document.getElementById('player-error');
 
         if (iframe) {
             iframe.onload = () => { 
@@ -197,14 +139,12 @@ const Player = {
                     loading.style.opacity = '0';
                     setTimeout(() => loading.style.display = 'none', 300);
                 }
+                if (errorDiv) errorDiv.style.display = 'none';
             };
+
             iframe.onerror = () => { 
-                if (loading) {
-                    loading.innerHTML = `
-                        <i class="fas fa-exclamation-circle" style="color:var(--danger); font-size:2rem;"></i>
-                        <p style="color:var(--danger);">Erro ao carregar. Tente outra fonte.</p>
-                    `;
-                }
+                if (loading) loading.style.display = 'none';
+                if (errorDiv) errorDiv.style.display = 'flex';
             };
         }
 
@@ -212,14 +152,234 @@ const Player = {
         setTimeout(() => {
             if (loading && loading.style.display !== 'none') {
                 loading.innerHTML = `
-                    <div style="width:48px; height:48px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--warning); border-radius:50%; animation:spin 1s linear infinite;"></div>
-                    <p style="color:var(--warning);">Demorando? Tente outra fonte abaixo.</p>
+                    <div class="player-spinner" style="border-top-color:var(--warning)"></div>
+                    <p style="color:var(--warning)">Demorando? Tente outra fonte.</p>
                 `;
             }
-        }, 8000);
+        }, 10000);
 
-        // Salva no historico
+        // Detect fullscreen para esconder/mostrar barra de fontes
+        this.setupFullscreenHandler();
+
         this.addToHistory(id, type, title);
+    },
+
+    // Mostra seletor de temporada/episodio para series
+    async showEpisodeSelector(id, title) {
+        const modal = this.ensureModalContainer();
+
+        try {
+            const data = await API.getTVDetails(id);
+            const seasons = (data.seasons || []).filter(s => s.season_number > 0);
+
+            if (!seasons.length) {
+                // Se nao tem temporadas, abre direto com S1E1
+                this.open(id, 'tv', title, 1, 1);
+                return;
+            }
+
+            // Busca episodios da primeira temporada por padrao
+            let currentSeasonNum = seasons[0].season_number;
+            let episodes = [];
+
+            try {
+                const seasonData = await API.getTVSeason(id, currentSeasonNum);
+                episodes = seasonData.episodes || [];
+            } catch(e) {
+                episodes = [];
+            }
+
+            modal.innerHTML = `
+                <div id="episode-selector" style="
+                    position:fixed; inset:0; background:var(--bg-primary); z-index:9999;
+                    display:flex; flex-direction:column; opacity:0;
+                    transition:opacity 0.3s ease;
+                ">
+                    <div style="
+                        display:flex; align-items:center; justify-content:space-between;
+                        padding:16px; border-bottom:1px solid rgba(255,255,255,0.05);
+                    ">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <button onclick="Player.closeEpisodeSelector()" style="
+                                width:36px; height:36px; border-radius:50%;
+                                background:var(--bg-tertiary); border:none; color:white;
+                                cursor:pointer; display:flex; align-items:center; justify-content:center;
+                            "><i class="fas fa-arrow-left"></i></button>
+                            <div>
+                                <div style="color:white; font-size:1rem; font-weight:700;">${title}</div>
+                                <div style="color:var(--text-muted); font-size:0.75rem;">Selecione temporada e episodio</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="flex:1; overflow-y:auto; padding:16px;">
+                        <!-- Tabs de temporadas -->
+                        <div style="display:flex; gap:8px; overflow-x:auto; margin-bottom:20px; padding-bottom:4px;">
+                            ${seasons.map(s => `
+                                <button onclick="Player.selectSeason(${id}, '${title.replace(/'/g, "\\'")}', ${s.season_number})" 
+                                    class="season-tab ${s.season_number === currentSeasonNum ? 'active' : ''}"
+                                    data-season="${s.season_number}">
+                                    T${s.season_number}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <!-- Lista de episodios -->
+                        <div id="episodes-list" style="display:flex; flex-direction:column; gap:10px;">
+                            ${episodes.length ? episodes.map(ep => `
+                                <div onclick="Player.selectEpisode(${id}, '${title.replace(/'/g, "\\'")}', ${ep.season_number}, ${ep.episode_number})" 
+                                    style="
+                                        display:flex; gap:12px; padding:12px;
+                                        background:var(--bg-card); border-radius:12px;
+                                        border:1px solid rgba(255,255,255,0.03);
+                                        cursor:pointer; transition:all 0.2s;
+                                    " onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='var(--bg-card)'">
+                                    <div style="
+                                        width:120px; height:68px; border-radius:8px;
+                                        background:var(--bg-tertiary); flex-shrink:0;
+                                        display:flex; align-items:center; justify-content:center;
+                                        overflow:hidden; position:relative;
+                                    ">
+                                        ${ep.still_path ? `
+                                            <img src="${getImageUrl(ep.still_path, 'w300')}" 
+                                                style="width:100%; height:100%; object-fit:cover;"
+                                                onerror="this.style.display='none'">
+                                        ` : ''}
+                                        <div style="
+                                            position:absolute; inset:0;
+                                            display:flex; align-items:center; justify-content:center;
+                                            background:rgba(0,0,0,0.4);
+                                        ">
+                                            <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
+                                        </div>
+                                    </div>
+                                    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+                                        <div style="color:white; font-size:0.85rem; font-weight:600;">
+                                            ${ep.episode_number}. ${ep.name}
+                                        </div>
+                                        <div style="color:var(--text-muted); font-size:0.75rem; margin-top:4px;">
+                                            ${ep.runtime ? ep.runtime + ' min · ' : ''}${ep.air_date || 'Data desconhecida'}
+                                        </div>
+                                        <div style="color:var(--text-secondary); font-size:0.75rem; margin-top:4px; line-height:1.4;
+                                            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                            ${ep.overview || 'Sem sinopse'}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('') : `
+                                <div style="text-align:center; padding:40px; color:var(--text-muted);">
+                                    <i class="fas fa-film" style="font-size:2rem; margin-bottom:12px;"></i>
+                                    <p>Nenhum episodio encontrado</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.style.pointerEvents = 'auto';
+            document.body.style.overflow = 'hidden';
+
+            requestAnimationFrame(() => {
+                const selector = document.getElementById('episode-selector');
+                if (selector) selector.style.opacity = '1';
+            });
+
+        } catch (err) {
+            console.error('Episode selector error:', err);
+            // Fallback: abre direto com S1E1
+            this.open(id, 'tv', title, 1, 1);
+        }
+    },
+
+    async selectSeason(id, title, seasonNum) {
+        // Atualiza tabs
+        document.querySelectorAll('.season-tab').forEach(tab => {
+            tab.classList.toggle('active', parseInt(tab.dataset.season) === seasonNum);
+        });
+
+        // Busca episodios da temporada
+        try {
+            const seasonData = await API.getTVSeason(id, seasonNum);
+            const episodes = seasonData.episodes || [];
+            const list = document.getElementById('episodes-list');
+
+            if (list) {
+                list.innerHTML = episodes.length ? episodes.map(ep => `
+                    <div onclick="Player.selectEpisode(${id}, '${title.replace(/'/g, "\\'")}', ${ep.season_number}, ${ep.episode_number})" 
+                        style="
+                            display:flex; gap:12px; padding:12px;
+                            background:var(--bg-card); border-radius:12px;
+                            border:1px solid rgba(255,255,255,0.03);
+                            cursor:pointer; transition:all 0.2s;
+                        " onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='var(--bg-card)'">
+                        <div style="
+                            width:120px; height:68px; border-radius:8px;
+                            background:var(--bg-tertiary); flex-shrink:0;
+                            display:flex; align-items:center; justify-content:center;
+                            overflow:hidden; position:relative;
+                        ">
+                            ${ep.still_path ? `
+                                <img src="${getImageUrl(ep.still_path, 'w300')}" 
+                                    style="width:100%; height:100%; object-fit:cover;"
+                                    onerror="this.style.display='none'">
+                            ` : ''}
+                            <div style="
+                                position:absolute; inset:0;
+                                display:flex; align-items:center; justify-content:center;
+                                background:rgba(0,0,0,0.4);
+                            ">
+                                <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
+                            </div>
+                        </div>
+                        <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+                            <div style="color:white; font-size:0.85rem; font-weight:600;">
+                                ${ep.episode_number}. ${ep.name}
+                            </div>
+                            <div style="color:var(--text-muted); font-size:0.75rem; margin-top:4px;">
+                                ${ep.runtime ? ep.runtime + ' min · ' : ''}${ep.air_date || 'Data desconhecida'}
+                            </div>
+                            <div style="color:var(--text-secondary); font-size:0.75rem; margin-top:4px; line-height:1.4;
+                                display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                ${ep.overview || 'Sem sinopse'}
+                            </div>
+                        </div>
+                    </div>
+                `).join('') : `
+                    <div style="text-align:center; padding:40px; color:var(--text-muted);">
+                        <i class="fas fa-film" style="font-size:2rem; margin-bottom:12px;"></i>
+                        <p>Nenhum episodio encontrado</p>
+                    </div>
+                `;
+            }
+        } catch (e) {
+            console.error('Select season error:', e);
+        }
+    },
+
+    selectEpisode(id, title, season, episode) {
+        this.closeEpisodeSelector();
+        setTimeout(() => {
+            this.open(id, 'tv', title, season, episode);
+        }, 300);
+    },
+
+    closeEpisodeSelector() {
+        const modal = document.getElementById('player-modal');
+        if (modal) {
+            const selector = document.getElementById('episode-selector');
+            if (selector) {
+                selector.style.opacity = '0';
+                setTimeout(() => {
+                    modal.innerHTML = '';
+                    modal.style.pointerEvents = 'none';
+                }, 300);
+            } else {
+                modal.innerHTML = '';
+                modal.style.pointerEvents = 'none';
+            }
+        }
+        document.body.style.overflow = '';
     },
 
     switchSource(index) {
@@ -231,34 +391,29 @@ const Player = {
 
         const iframe = document.getElementById('player-iframe');
         const loading = document.getElementById('player-loading');
+        const errorDiv = document.getElementById('player-error');
 
-        // Atualiza iframe
         if (iframe) {
             iframe.src = url;
             if (loading) {
                 loading.style.display = 'flex';
                 loading.style.opacity = '1';
                 loading.innerHTML = `
-                    <div style="width:48px; height:48px; border:3px solid rgba(255,255,255,0.1); border-top-color:${player.color}; border-radius:50%; animation:spin 1s linear infinite;"></div>
-                    <p style="color:rgba(255,255,255,0.6); font-size:0.85rem;">
-                        Carregando <span style="color:${player.color}; font-weight:700;">${player.name}</span>...
-                    </p>
+                    <div class="player-spinner" style="border-top-color:${player.color}"></div>
+                    <p>Carregando <span style="color:${player.color}; font-weight:700;">${player.name}</span>...</p>
                 `;
             }
+            if (errorDiv) errorDiv.style.display = 'none';
         }
 
         // Atualiza header
-        const headerTitle = document.querySelector('#player-overlay > div:first-child > div > div:last-child');
-        if (headerTitle) {
-            headerTitle.innerHTML = `
-                <div style="color:white; font-size:0.85rem; font-weight:600;">${this.currentTitle}</div>
-                <div style="color:${player.color}; font-size:0.7rem; font-weight:700;">
-                    <i class="fas ${player.icon}" style="margin-right:4px"></i>${player.name}
-                </div>
-            `;
+        const sourceLabel = document.querySelector('.player-header-source');
+        if (sourceLabel) {
+            sourceLabel.style.color = player.color;
+            sourceLabel.innerHTML = `<i class="fas ${player.icon}"></i> ${player.name}`;
         }
 
-        // Atualiza botoes ativos
+        // Atualiza botoes
         CONFIG.PLAYERS.forEach((p, i) => {
             const btn = document.querySelector(`.source-btn-${i}`);
             if (btn) {
@@ -271,26 +426,43 @@ const Player = {
                 const icon = btn.querySelector('i');
                 if (icon) icon.style.color = isActive ? 'white' : 'rgba(255,255,255,0.5)';
 
-                // Remove/add pulse
-                const oldPulse = btn.querySelector('div[style*="animation:pulse-dot"]');
+                const oldPulse = btn.querySelector('.source-pulse');
                 if (oldPulse) oldPulse.remove();
                 if (isActive) {
-                    btn.innerHTML += `
-                        <div style="position:absolute; top:-4px; right:-4px; width:10px; height:10px; background:var(--accent, #00d084); border-radius:50%; animation:pulse-dot 1.5s ease infinite; border:2px solid #000;"></div>
-                    `;
+                    btn.innerHTML += `<div class="source-pulse"></div>`;
                 }
             }
         });
 
-        // Timeout fallback
         setTimeout(() => {
             if (loading && loading.style.display !== 'none') {
                 loading.innerHTML = `
-                    <div style="width:48px; height:48px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--warning); border-radius:50%; animation:spin 1s linear infinite;"></div>
-                    <p style="color:var(--warning);">Demorando? Tente outra fonte.</p>
+                    <div class="player-spinner" style="border-top-color:var(--warning)"></div>
+                    <p style="color:var(--warning)">Demorando? Tente outra fonte.</p>
                 `;
             }
-        }, 8000);
+        }, 10000);
+    },
+
+    setupFullscreenHandler() {
+        const sourcesBar = document.getElementById('player-sources-bar');
+        const header = document.querySelector('.player-header-bar');
+
+        if (!sourcesBar || !header) return;
+
+        const onFullscreenChange = () => {
+            const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            if (isFullscreen) {
+                sourcesBar.style.display = 'none';
+                header.style.display = 'none';
+            } else {
+                sourcesBar.style.display = 'block';
+                header.style.display = 'flex';
+            }
+        };
+
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     },
 
     addToHistory(id, type, title) {
@@ -319,18 +491,3 @@ const Player = {
         document.body.style.overflow = '';
     }
 };
-
-// CSS inline para animacoes (adiciona se nao existir)
-if (!document.getElementById('player-animations')) {
-    const style = document.createElement('style');
-    style.id = 'player-animations';
-    style.textContent = `
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse-dot {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.5; }
-        }
-        .sources-scroll::-webkit-scrollbar { display: none; }
-    `;
-    document.head.appendChild(style);
-}
