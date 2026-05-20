@@ -35,7 +35,7 @@ const MovieCard = {
                             <button class="${isList ? 'active' : ''}" onclick="MovieCard.toggleList(event, ${item.id}, '${type}', '${title.replace(/'/g, "\'")}', '${item.poster_path || ''}')" title="${isList ? 'Remover' : 'Salvar'}">
                                 <i class="fas ${isList ? 'fa-check' : 'fa-plus'}"></i>
                             </button>
-                            <button class="${isWatched ? 'active' : ''}" onclick="MovieCard.toggleWatched(event, ${item.id}, '${type}', '${title.replace(/'/g, "\'")}', '${item.poster_path || ''}')" title="${isWatched ? 'Não assistido' : 'Assistido'}">
+                            <button class="${isWatched ? 'active watched' : ''}" onclick="MovieCard.toggleWatched(event, ${item.id}, '${type}', '${title.replace(/'/g, "\'")}', '${item.poster_path || ''}')" title="${isWatched ? 'Não assistido' : 'Assistido'}">
                                 <i class="fas ${isWatched ? 'fa-eye-slash' : 'fa-eye'}"></i>
                             </button>
                         </div>

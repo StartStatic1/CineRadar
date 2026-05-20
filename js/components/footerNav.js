@@ -16,8 +16,8 @@ const FooterNav = {
             <nav class="footer-nav">
                 ${items.map(item => `
                     <a href="${item.path}" class="footer-nav-item ${route.includes(item.path.replace('#/', '')) ? 'active' : ''}">
-                        <i class="fas ${item.icon}"></i>
-                        <span>${item.label}</span>
+                        <div class="footer-nav-icon"><i class="fas ${item.icon}"></i></div>
+                        <span class="footer-nav-label">${item.label}</span>
                     </a>
                 `).join('')}
             </nav>

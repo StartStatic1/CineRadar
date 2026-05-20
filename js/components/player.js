@@ -20,6 +20,7 @@ const Player = {
 
         modal.innerHTML = `
             <div class="player-modal-overlay active" onclick="Player.close(event)">
+                <!-- Header -->
                 <div class="player-modal-header" onclick="event.stopPropagation()">
                     <div class="player-header-left">
                         <h3><i class="fas ${player.icon}" style="color:${player.color}"></i> ${title}</h3>
@@ -27,9 +28,10 @@ const Player = {
                             ${player.name}
                         </span>
                     </div>
-                    <button onclick="Player.close(event)"><i class="fas fa-times"></i></button>
+                    <button class="player-close-btn" onclick="Player.close(event)"><i class="fas fa-times"></i></button>
                 </div>
 
+                <!-- Body com iframe -->
                 <div class="player-modal-body" onclick="event.stopPropagation()">
                     <iframe id="player-iframe" src="${url}" allowfullscreen loading="lazy" 
                         sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation">
@@ -61,8 +63,14 @@ const Player = {
         // Loading handler
         const iframe = $('#player-iframe');
         const loading = $('#player-loading');
-        iframe.onload = () => { if (loading) loading.style.display = 'none'; };
-        iframe.onerror = () => { if (loading) loading.innerHTML = '<p style="color:var(--danger)">Erro ao carregar. Tente outra fonte.</p>'; };
+
+        iframe.onload = () => { 
+            if (loading) loading.style.display = 'none'; 
+        };
+
+        iframe.onerror = () => { 
+            if (loading) loading.innerHTML = '<p style="color:var(--danger)">Erro ao carregar. Tente outra fonte.</p>'; 
+        };
 
         // Timeout de fallback
         setTimeout(() => {
@@ -131,9 +139,10 @@ const Player = {
     },
 
     close(e) {
-        if (e.target.classList.contains('player-modal-overlay') || e.target.closest('button')) {
+        if (e.target.classList.contains('player-modal-overlay') || e.target.closest('.player-close-btn')) {
             $('#player-modal').innerHTML = '';
             document.body.style.overflow = '';
+            // Limpa interval do hero se necessário
         }
     }
 };
