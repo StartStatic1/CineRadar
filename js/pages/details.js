@@ -96,7 +96,8 @@ const DetailsPage = {
                             <button class="btn btn-secondary ${Storage.isWatched(id, type) ? 'active watched' : ''}" onclick="MovieCard.toggleWatched(event, ${id}, '${type}', '${title.replace(/'/g, "\'")}', '${data.poster_path || ''}')">
                                 <i class="fas ${Storage.isWatched(id, type) ? 'fa-eye-slash' : 'fa-eye'}"></i>
                             </button>
-                            ${trailer ? `<button class="btn btn-secondary" onclick="window.open('https://youtube.com/watch?v=${trailer.key}', '_blank')"><i class="fas fa-film"></i> Trailer</button>` : ''}
+                            ${trailer ? `<a href="https://youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="fas fa-film"></i> Trailer</a>` : ''}
+
                         </div>
 
                         <div class="genres-row">
