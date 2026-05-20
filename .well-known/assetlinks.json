@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.cineradar.app",
+      "sha256_cert_fingerprints": [
+        "43:E2:D7:4E:82:E8:41:98:6B:95:BA:90:0A:2D:0A:0A:CE:2D:AC:CC:F8:4B:58:C7:9C:E0:A8:E6:7C:A1:4A:5D"
+      ]
+    }
+  }
+]
