@@ -46,6 +46,231 @@
     <!-- Footer Nav -->
     <div id="footer-container"></div>
 
+    <!-- ===== GATE DE ACESSO ===== -->
+    <div id="cine-gate-overlay" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 99999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        font-family: 'Inter', sans-serif;
+    ">
+        <div style="
+            background: #141414;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 32px 24px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.9);
+            animation: gateSlideUp 0.4s ease;
+        ">
+            <div style="
+                width: 64px;
+                height: 64px;
+                background: rgba(229,9,20,0.15);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 20px;
+                font-size: 28px;
+                color: #e50914;
+            ">🔒</div>
+
+            <h2 style="
+                margin: 0 0 8px;
+                font-size: 20px;
+                font-weight: 800;
+                color: #fff;
+                letter-spacing: -0.3px;
+            ">Acesso Premium</h2>
+
+            <p style="
+                margin: 0 0 24px;
+                font-size: 14px;
+                color: #aaa;
+                line-height: 1.6;
+            ">
+                Desbloqueie <strong style="color:#fff">5 horas</strong> de acesso sem interrupções.<br>
+                Clique no botão abaixo para continuar.
+            </p>
+
+            <button id="cine-gate-unlock" style="
+                width: 100%;
+                padding: 14px 20px;
+                background: #e50914;
+                color: #fff;
+                border: none;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 700;
+                font-family: 'Inter', sans-serif;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: transform 0.15s, box-shadow 0.15s;
+                box-shadow: 0 4px 16px rgba(229,9,20,0.4);
+            ">
+                <i class="fas fa-unlock" style="font-size:13px"></i>
+                Desbloquear Acesso
+            </button>
+
+            <div id="cine-gate-timer" style="
+                display: none;
+                margin-top: 16px;
+                padding: 12px;
+                background: rgba(0,255,136,0.08);
+                border: 1px solid rgba(0,255,136,0.15);
+                border-radius: 10px;
+            ">
+                <div style="font-size:12px;color:#00ff88;margin-bottom:4px">
+                    <i class="fas fa-check-circle"></i> Acesso liberado
+                </div>
+                <div style="font-size:18px;font-weight:800;color:#00ff88;font-variant-numeric:tabular-nums" id="cine-gate-countdown">
+                    05:00:00
+                </div>
+                <div style="font-size:11px;color:#666;margin-top:2px">restando</div>
+            </div>
+
+            <p style="
+                margin: 20px 0 0;
+                font-size: 11px;
+                color: #555;
+            ">
+                CineRadar - Streaming Guide
+            </p>
+        </div>
+    </div>
+
+    <style>
+        @keyframes gateSlideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        #cine-gate-overlay.active {
+            display: flex !important;
+        }
+        body.gate-locked {
+            overflow: hidden !important;
+            height: 100vh !important;
+            touch-action: none !important;
+        }
+    </style>
+
+    <script>
+    (function() {
+        'use strict';
+
+        var GATE_KEY = 'cineradar_gate_unlock';
+        var GATE_DURATION = 5 * 60 * 60 * 1000;
+
+        function getUnlockTime() {
+            var raw = localStorage.getItem(GATE_KEY);
+            return raw ? parseInt(raw, 10) : 0;
+        }
+
+        function setUnlockTime() {
+            localStorage.setItem(GATE_KEY, Date.now().toString());
+        }
+
+        function isUnlocked() {
+            var unlockedAt = getUnlockTime();
+            if (!unlockedAt) return false;
+            var elapsed = Date.now() - unlockedAt;
+            return elapsed < GATE_DURATION;
+        }
+
+        function getRemainingTime() {
+            var unlockedAt = getUnlockTime();
+            if (!unlockedAt) return 0;
+            var remaining = GATE_DURATION - (Date.now() - unlockedAt);
+            return Math.max(0, remaining);
+        }
+
+        function formatTime(ms) {
+            var totalSeconds = Math.floor(ms / 1000);
+            var h = Math.floor(totalSeconds / 3600);
+            var m = Math.floor((totalSeconds % 3600) / 60);
+            var s = totalSeconds % 60;
+            return (h < 10 ? '0' : '') + h + ':' +
+                   (m < 10 ? '0' : '') + m + ':' +
+                   (s < 10 ? '0' : '') + s;
+        }
+
+        function showGate() {
+            var overlay = document.getElementById('cine-gate-overlay');
+            if (!overlay) return;
+            overlay.classList.add('active');
+            document.body.classList.add('gate-locked');
+        }
+
+        function hideGate() {
+            var overlay = document.getElementById('cine-gate-overlay');
+            if (!overlay) return;
+            overlay.classList.remove('active');
+            document.body.classList.remove('gate-locked');
+        }
+
+        function showTimer() {
+            var timerBox = document.getElementById('cine-gate-timer');
+            var countdown = document.getElementById('cine-gate-countdown');
+            var unlockBtn = document.getElementById('cine-gate-unlock');
+            if (timerBox) timerBox.style.display = 'block';
+            if (unlockBtn) unlockBtn.style.display = 'none';
+
+            var interval = setInterval(function() {
+                var remaining = getRemainingTime();
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    hideGate();
+                    setTimeout(function() {
+                        localStorage.removeItem(GATE_KEY);
+                        showGate();
+                    }, 500);
+                    return;
+                }
+                if (countdown) countdown.textContent = formatTime(remaining);
+            }, 1000);
+        }
+
+        function initGate() {
+            var unlockBtn = document.getElementById('cine-gate-unlock');
+            if (unlockBtn) {
+                unlockBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var win = window.open('https://omg10.com/4/11031110', '_blank');
+                    if (win) win.focus();
+                    setUnlockTime();
+                    showTimer();
+                });
+            }
+
+            if (isUnlocked()) {
+                showGate();
+                showTimer();
+            } else {
+                localStorage.removeItem(GATE_KEY);
+                showGate();
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGate);
+        } else {
+            initGate();
+        }
+    })();
+    </script>
+
     <!-- ===== SCRIPTS ===== -->
     <!-- Config (primeiro) -->
     <script src="js/config.js"></script>
@@ -60,7 +285,6 @@
     <!-- Components -->
     <script src="js/components/loader.js"></script>
     <script src="js/components/navbar.js"></script>
-    <script src="js/ads-helper.js"></script>
     <script src="js/components/footerNav.js"></script>
     <script src="js/components/movieCard.js"></script>
     <script src="js/components/carousel.js"></script>
