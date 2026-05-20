@@ -98,8 +98,8 @@
                 color: #aaa;
                 line-height: 1.6;
             ">
-                Desbloqueie <strong style="color:#fff">5 horas</strong> de acesso sem interrupções.<br>
-                Clique no botão abaixo para continuar.
+                Desbloqueie <strong style="color:#fff">5 horas</strong> de acesso sem interrupcoes.<br>
+                Clique no botao abaixo para continuar.
             </p>
 
             <button id="cine-gate-unlock" style="
@@ -220,22 +220,25 @@
             document.body.classList.remove('gate-locked');
         }
 
-        function showTimer() {
+        function showTimerAndHide() {
             var timerBox = document.getElementById('cine-gate-timer');
             var countdown = document.getElementById('cine-gate-countdown');
             var unlockBtn = document.getElementById('cine-gate-unlock');
+
             if (timerBox) timerBox.style.display = 'block';
             if (unlockBtn) unlockBtn.style.display = 'none';
 
+            // === LIBERA O APP IMEDIATAMENTE ===
+            setTimeout(function() {
+                hideGate();
+            }, 1500); // Mostra timer por 1.5s depois libera
+
+            // Atualiza o timer em background
             var interval = setInterval(function() {
                 var remaining = getRemainingTime();
                 if (remaining <= 0) {
                     clearInterval(interval);
-                    hideGate();
-                    setTimeout(function() {
-                        localStorage.removeItem(GATE_KEY);
-                        showGate();
-                    }, 500);
+                    localStorage.removeItem(GATE_KEY);
                     return;
                 }
                 if (countdown) countdown.textContent = formatTime(remaining);
@@ -247,16 +250,19 @@
             if (unlockBtn) {
                 unlockBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    // Abre o ad
                     var win = window.open('https://omg10.com/4/11031110', '_blank');
                     if (win) win.focus();
+                    // Marca como desbloqueado
                     setUnlockTime();
-                    showTimer();
+                    // Mostra timer e LIBERA o app
+                    showTimerAndHide();
                 });
             }
 
             if (isUnlocked()) {
-                showGate();
-                showTimer();
+                // Ja esta desbloqueado, libera direto
+                hideGate();
             } else {
                 localStorage.removeItem(GATE_KEY);
                 showGate();
