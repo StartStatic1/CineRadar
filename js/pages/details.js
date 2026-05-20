@@ -10,7 +10,7 @@ const DetailsPage = {
                 ? await API.getTVDetails(id) 
                 : await API.getMovieDetails(id);
 
-            // Watchmode em paralelo (não bloqueia se falhar)
+            // Watchmode em paralelo (nao bloqueia se falhar)
             let watchmodeSources = null;
             try {
                 const wmId = await API.getWatchmodeId(id, type);
@@ -32,6 +32,14 @@ const DetailsPage = {
                 console.log('OMDb fallback:', e.message);
             }
 
+            // Busca relacionados em paralelo
+            let relatedData = null;
+            try {
+                relatedData = await API.getSimilar(id, type);
+            } catch (e) {
+                console.log('Related fallback:', e.message);
+            }
+
             const title = data.title || data.name;
             const backdrop = getBackdropUrl(data.backdrop_path, 'w1280');
             const poster = getImageUrl(data.poster_path, 'w500');
@@ -45,7 +53,7 @@ const DetailsPage = {
             const tmdbProviders = data['watch/providers']?.results?.[CONFIG.REGION];
 
             // Sinopse: TMDB ou OMDb (mais completa)
-            const overview = data.overview || omdbData?.Plot || 'Sinopse não disponível.';
+            const overview = data.overview || omdbData?.Plot || 'Sinopse nao disponivel.';
 
             Storage.addToHistory(id, type, title, data.poster_path);
 
@@ -73,14 +81,14 @@ const DetailsPage = {
                         </div>
 
                         <div class="detail-actions">
-                            <button class="btn-play" onclick="Player.open(${id}, '${type}', '${title.replace(/'/g, "\'")}')">
+                            <button class="btn-play" onclick="Player.open(${id}, '${type}', '${title.replace(/'/g, "\\'")}')">
                                 <i class="fas fa-play"></i> Assistir
                             </button>
-                            <button class="btn btn-secondary ${Storage.isInList(id, type) ? 'active' : ''}" onclick="MovieCard.toggleList(event, ${id}, '${type}', '${title.replace(/'/g, "\'")}', '${data.poster_path || ''}')">
+                            <button class="btn btn-secondary ${Storage.isInList(id, type) ? 'active' : ''}" onclick="MovieCard.toggleList(event, ${id}, '${type}', '${title.replace(/'/g, "\\'")}', '${data.poster_path || ''}')">
                                 <i class="fas ${Storage.isInList(id, type) ? 'fa-check' : 'fa-plus'}"></i>
                                 ${Storage.isInList(id, type) ? 'Salvo' : 'Salvar'}
                             </button>
-                            <button class="btn btn-secondary ${Storage.isWatched(id, type) ? 'active' : ''}" onclick="MovieCard.toggleWatched(event, ${id}, '${type}', '${title.replace(/'/g, "\'")}', '${data.poster_path || ''}')">
+                            <button class="btn btn-secondary ${Storage.isWatched(id, type) ? 'active watched' : ''}" onclick="MovieCard.toggleWatched(event, ${id}, '${type}', '${title.replace(/'/g, "\\'")}', '${data.poster_path || ''}')">
                                 <i class="fas ${Storage.isWatched(id, type) ? 'fa-eye-slash' : 'fa-eye'}"></i>
                             </button>
                             ${trailer ? `<button class="btn btn-secondary" onclick="window.open('https://youtube.com/watch?v=${trailer.key}', '_blank')"><i class="fas fa-film"></i> Trailer</button>` : ''}
@@ -122,23 +130,39 @@ const DetailsPage = {
                                 <h3>Temporadas (${data.seasons.length})</h3>
                                 <div class="seasons-list">
                                     ${data.seasons.filter(s => s.season_number > 0).map(s => `
-                                        <div class="season-card" onclick="Player.open(${id}, 'tv', '${title.replace(/'/g, "\'")}', ${s.season_number}, 1)">
+                                        <div class="season-card" onclick="Player.open(${id}, 'tv', '${title.replace(/'/g, "\\'")}', ${s.season_number}, 1)">
                                             <img src="${getImageUrl(s.poster_path, 'w185')}" alt="${s.name}" loading="lazy">
                                             <div class="season-info">
                                                 <h4>${s.name}</h4>
-                                                <p>${s.episode_count} episódios · ${s.air_date ? s.air_date.substring(0,4) : 'N/A'}</p>
+                                                <p>${s.episode_count} episodios · ${s.air_date ? s.air_date.substring(0,4) : 'N/A'}</p>
                                             </div>
                                         </div>
                                     `).join('')}
                                 </div>
                             </div>
                         ` : ''}
+
+                        ${this.renderRelated(relatedData)}
                     </div>
                 </div>
             `;
         } catch (err) {
             main.innerHTML = `<div class="empty-state" style="padding-top:120px"><i class="fas fa-film"></i><h3>Erro ao carregar</h3><p>${err.message}</p><a href="#/home" class="btn btn-primary" style="margin-top:16px"><i class="fas fa-arrow-left"></i> Voltar</a></div>`;
         }
+    },
+
+    renderRelated(relatedData) {
+        if (!relatedData || !relatedData.results || relatedData.results.length === 0) return '';
+
+        const items = relatedData.results.slice(0, 10);
+        return `
+            <div class="sinopse-section">
+                <h3><i class="fas fa-photo-video" style="color:var(--accent)"></i> Relacionados</h3>
+                <div class="carousel-container">
+                    ${items.map(i => MovieCard.render(i)).join('')}
+                </div>
+            </div>
+        `;
     },
 
     renderProviders(tmdbProviders, watchmodeSources) {
@@ -169,7 +193,7 @@ const DetailsPage = {
             });
         }
 
-        // Watchmode sources enriquece com preços e links
+        // Watchmode sources enriquece com precos e links
         if (watchmodeSources && Array.isArray(watchmodeSources)) {
             watchmodeSources.forEach(s => {
                 const nameLower = s.name?.toLowerCase() || '';
@@ -194,7 +218,7 @@ const DetailsPage = {
 
         if (!merged.size) return '';
 
-        const typeLabels = { stream: 'Streaming', ads: 'Grátis com Ads', rent: 'Alugar', buy: 'Comprar' };
+        const typeLabels = { stream: 'Streaming', ads: 'Gratis com Ads', rent: 'Alugar', buy: 'Comprar' };
         const items = Array.from(merged.values());
 
         return `
