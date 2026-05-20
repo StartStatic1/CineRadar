@@ -12,16 +12,16 @@ const CalendarPage = {
 
             main.innerHTML = `
                 <div class="calendar-page">
-                    <h1><i class="fas fa-calendar-alt" style="color:var(--accent)"></i> Lançamentos</h1>
-                    <p>Próximas estreias</p>
+                    <h1><i class="fas fa-calendar-alt" style="color:var(--accent)"></i> Lancamentos</h1>
+                    <p>Proximas estreias</p>
 
                     <div class="filter-pills">
-                        <button class="filter-pill active">Próximos 30 dias</button>
-                        <button class="filter-pill" onclick="showToast('Em breve', 'info')">Este Mês</button>
-                        <button class="filter-pill" onclick="showToast('Em breve', 'info')">Próximo Mês</button>
+                        <button class="filter-pill active">Proximos 30 dias</button>
+                        <button class="filter-pill" onclick="showToast('Em breve', 'info')">Este Mes</button>
+                        <button class="filter-pill" onclick="showToast('Em breve', 'info')">Proximo Mes</button>
                     </div>
 
-                    ${all.length === 0 ? '<div class="empty-state"><i class="fas fa-calendar"></i><h3>Sem lançamentos</h3></div>' : `
+                    ${all.length === 0 ? '<div class="empty-state"><i class="fas fa-calendar"></i><h3>Sem lancamentos</h3></div>' : `
                         <div>${all.map(item => this.renderItem(item)).join('')}</div>
                     `}
                 </div>
@@ -45,7 +45,7 @@ const CalendarPage = {
                     <h3>${title}</h3>
                     <p>${item.overview ? item.overview.substring(0, 100) + '...' : ''}</p>
                     <div class="meta-row">
-                        <span class="badge ${item.type === 'movie' ? 'badge-blue' : 'badge-green'}" style="font-size:0.7rem;padding:2px 8px">${item.type === 'movie' ? '🎬 Filme' : '📺 Série'}</span>
+                        <span class="badge ${item.type === 'movie' ? 'badge-blue' : 'badge-green'}" style="font-size:0.7rem;padding:2px 8px">${item.type === 'movie' ? 'Filme' : 'Serie'}</span>
                         <span style="color:var(--warning);font-size:0.8rem"><i class="fas fa-star"></i> ${formatRating(item.vote_average)}</span>
                     </div>
                 </div>
