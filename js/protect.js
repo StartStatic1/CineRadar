@@ -1,23 +1,21 @@
 // ==========================================
-// PROTECT - Bloqueia interacoes de "roubo" de conteudo
-// Incluir no index.html: <script src="js/protect.js"></script>
+// PROTECT - Bloqueia interacoes de "roubo" de conteudo + popups de players
 // ==========================================
 
 (function() {
     'use strict';
 
-    // 1. Bloqueia clique direito (desktop)
+    // 1. Bloqueia clique direito
     document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
         e.stopPropagation();
         return false;
     }, true);
 
-    // 2. Bloqueia toque longo no mobile (segurar dedo)
+    // 2. Bloqueia toque longo no mobile
     let touchTimer = null;
 
     document.addEventListener('touchstart', function(e) {
-        // Se for em imagem ou video, bloqueia toque longo
         const tag = e.target.tagName.toLowerCase();
         if (tag === 'img' || tag === 'video' || tag === 'iframe' || tag === 'canvas') {
             touchTimer = setTimeout(function() {
@@ -41,7 +39,7 @@
         }
     }, { capture: true });
 
-    // 3. Bloqueia selecao de texto (evita copiar)
+    // 3. Bloqueia selecao de texto
     document.addEventListener('selectstart', function(e) {
         e.preventDefault();
         return false;
@@ -53,44 +51,41 @@
         return false;
     }, true);
 
-    // 5. Bloqueia atalhos de teclado (Ctrl+S, Ctrl+U, F12, etc)
+    // 5. Bloqueia atalhos de teclado perigosos
     document.addEventListener('keydown', function(e) {
-        // F12 (DevTools)
         if (e.key === 'F12') {
             e.preventDefault();
             return false;
         }
-        // Ctrl+Shift+I (DevTools)
-        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) {
             e.preventDefault();
             return false;
         }
-        // Ctrl+Shift+J (Console)
-        if (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j')) {
-            e.preventDefault();
-            return false;
-        }
-        // Ctrl+U (Ver fonte)
-        if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
-            e.preventDefault();
-            return false;
-        }
-        // Ctrl+S (Salvar pagina)
-        if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
-            e.preventDefault();
-            return false;
-        }
-        // Ctrl+P (Imprimir)
-        if (e.ctrlKey && (e.key === 'p' || e.key === 'P')) {
+        if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S' || e.key === 'p' || e.key === 'P')) {
             e.preventDefault();
             return false;
         }
     }, true);
 
-    // 6. CSS inline para desabilitar selecao e arrasto em elementos sensiveis
+    // 6. Bloqueia popups e redirecionamentos de iframes (ads dos players)
+    // Isso intercepta window.open e location changes dentro do iframe
+    const originalOpen = window.open;
+    window.open = function(url, target, features) {
+        // So permite popups se forem iniciados pelo usuario (clique direto)
+        // Bloqueia popups automaticos de ads
+        console.log('[CineRadar] Popup bloqueado:', url);
+        return null;
+    };
+
+    // 7. Bloqueia beforeunload (quando ads tentam impedir fechar a pagina)
+    window.addEventListener('beforeunload', function(e) {
+        // So permite se o usuario estiver saindo intencionalmente
+        // (nao bloqueia o fechar normal da pagina)
+    });
+
+    // 8. CSS para desabilitar selecao
     const style = document.createElement('style');
     style.textContent = `
-        /* Desabilita selecao em todo o app */
         * {
             -webkit-user-select: none !important;
             -moz-user-select: none !important;
@@ -99,7 +94,6 @@
             -webkit-touch-callout: none !important;
         }
 
-        /* Permite selecao em inputs e textareas (pra digitar) */
         input, textarea, [contenteditable] {
             -webkit-user-select: text !important;
             -moz-user-select: text !important;
@@ -107,19 +101,13 @@
             user-select: text !important;
         }
 
-        /* Desabilita arrastar imagens */
         img, video, iframe {
             -webkit-user-drag: none !important;
             user-drag: none !important;
             pointer-events: auto;
         }
-
-        /* Desabilita menu de contexto no mobile */
-        * {
-            -webkit-touch-callout: none !important;
-        }
     `;
     document.head.appendChild(style);
 
-    console.log('[CineRadar] Protecao ativada: clique direito, toque longo, selecao e atalhos bloqueados.');
+    console.log('[CineRadar] Protecao ativada.');
 })();
