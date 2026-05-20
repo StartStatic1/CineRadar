@@ -28,7 +28,7 @@
     right: 0;
     background: var(--bg-primary);
     border-radius: 20px 20px 0 0;
-    max-height: 85vh;
+    max-height: 92vh;
     display: flex;
     flex-direction: column;
     transform: translateY(100%);
@@ -44,27 +44,27 @@
     height: 4px;
     background: rgba(255,255,255,0.2);
     border-radius: 2px;
-    margin: 12px auto 8px;
+    margin: 10px auto 6px;
 }
 
 .player-sheet-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: 8px 20px 12px;
+    padding: 6px 16px 10px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .player-sheet-title {
     color: white;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
     line-height: 1.3;
 }
 
 .player-sheet-subtitle {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     margin-top: 2px;
 }
 
@@ -79,44 +79,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     flex-shrink: 0;
 }
 
-/* Audio tabs */
-.player-sheet-audio {
-    padding: 12px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.audio-tabs {
-    display: flex;
-    gap: 8px;
-}
-
-.audio-tab {
-    flex: 1;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.audio-tab.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-/* Source chips */
+/* Source chips — compactos */
 .player-sheet-sources {
     display: flex;
     gap: 8px;
-    padding: 12px 20px;
+    padding: 8px 16px;
     overflow-x: auto;
     scrollbar-width: none;
     border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -129,12 +100,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 8px 16px;
     border-radius: 20px;
     border: 1.5px solid rgba(255,255,255,0.08);
     background: rgba(255,255,255,0.04);
     color: rgba(255,255,255,0.7);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
@@ -142,7 +113,7 @@
     position: relative;
 }
 .source-chip i {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
 }
 .source-chip.active {
     background: rgba(255,255,255,0.08);
@@ -161,10 +132,10 @@
     100% { transform: scale(1.15); opacity: 0; }
 }
 
-/* Iframe no sheet */
+/* Iframe — maior, ocupa mais espaço */
 .player-sheet-iframe-wrap {
     flex: 1;
-    min-height: 220px;
+    min-height: 280px;
     position: relative;
     background: #000;
 }
@@ -172,7 +143,7 @@
 #sheet-iframe {
     width: 100%;
     height: 100%;
-    min-height: 220px;
+    min-height: 280px;
     border: none;
     display: block;
 }
