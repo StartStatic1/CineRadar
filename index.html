@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0a0a0a">
     <meta name="description" content="CineRadar - Descubra filmes e series. Streaming guide brasileiro.">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>CineRadar</title>
 
     <!-- PWA -->
@@ -80,5 +79,42 @@
     <script src="js/router.js"></script>
     <script src="js/app.js"></script>
     <script src="js/protect.js"></script>
+
+    <!-- === ADS: OnClick (popunder) - so ativa apos 15s e fora do player === -->
+    <script>
+    (function() {
+        // Verifica se o player esta aberto
+        function isPlayerOpen() {
+            var modal = document.getElementById('player-modal');
+            return modal && (modal.style.display === 'flex' || modal.style.display === 'block');
+        }
+
+        // Carrega o script de ad
+        function loadAdScript() {
+            if (window.__cineradarAdLoaded) return;
+            window.__cineradarAdLoaded = true;
+
+            var s = document.createElement('script');
+            s.dataset.zone = '11031120';
+            s.src = 'https://al5sm.com/tag.min.js';
+            document.body.appendChild(s);
+        }
+
+        // Inicializa apos 15 segundos
+        setTimeout(function() {
+            if (isPlayerOpen()) {
+                // Se player aberto, aguarda fechar e tenta de novo
+                var checkInterval = setInterval(function() {
+                    if (!isPlayerOpen()) {
+                        clearInterval(checkInterval);
+                        loadAdScript();
+                    }
+                }, 2000);
+                return;
+            }
+            loadAdScript();
+        }, 15000);
+    })();
+    </script>
 </body>
 </html>
