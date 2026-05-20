@@ -11,10 +11,10 @@ const Storage = {
         if (!list.find(i => i.id === item.id && i.type === item.type)) {
             list.unshift({ ...item, addedAt: new Date().toISOString() });
             localStorage.setItem(this.MY_LIST_KEY, JSON.stringify(list));
-            showToast('Adicionado à lista!', 'success');
+            showToast('Adicionado a lista!', 'success');
             return true;
         }
-        showToast('Já está na lista', 'info');
+        showToast('Ja esta na lista', 'info');
         return false;
     },
     removeFromList(id, type) {
@@ -35,7 +35,7 @@ const Storage = {
         if (idx >= 0) {
             w.splice(idx, 1);
             localStorage.setItem(this.WATCHED_KEY, JSON.stringify(w));
-            showToast('Marcado como não assistido', 'info');
+            showToast('Marcado como nao assistido', 'info');
             return false;
         }
         w.unshift({ id, type, title, poster, watchedAt: new Date().toISOString() });

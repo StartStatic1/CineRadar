@@ -29,6 +29,7 @@ function getBackdropUrl(path, size = 'w1280') {
 
 function showToast(msg, type = 'info') {
     const c = $('#toast-container');
+    if (!c) return;
     const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
     const t = document.createElement('div');
     t.className = `toast ${type}`;
@@ -47,21 +48,19 @@ function getRelativeDate(dateStr) {
     const now = new Date();
     const diff = Math.floor((d - now) / (1000 * 60 * 60 * 24));
     if (diff === 0) return 'Hoje';
-    if (diff === 1) return 'Amanhã';
+    if (diff === 1) return 'Amanha';
     if (diff === -1) return 'Ontem';
     if (diff > 1 && diff <= 7) return `Em ${diff} dias`;
-    if (diff < -1 && diff >= -7) return `Há ${Math.abs(diff)} dias`;
+    if (diff < -1 && diff >= -7) return `Ha ${Math.abs(diff)} dias`;
     return formatDate(dateStr);
 }
 
-// Helper: formata preço do Watchmode
 function formatPrice(price) {
     if (!price) return '';
     return price < 10 ? `R$ ${price.toFixed(2).replace('.', ',')}` : `R$ ${price.toFixed(0)}`;
 }
 
-// Helper: tipo de disponibilidade traduzido
 function getSourceTypeLabel(type) {
-    const labels = { sub: 'Streaming', rent: 'Alugar', buy: 'Comprar', free: 'Grátis', tve: 'TV App' };
+    const labels = { sub: 'Streaming', rent: 'Alugar', buy: 'Comprar', free: 'Gratis', tve: 'TV App' };
     return labels[type] || type;
 }

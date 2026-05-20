@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎬 CineRadar iniciando...');
-    console.log('TMDB_KEY configurada:', CONFIG.TMDB_API_KEY && !CONFIG.TMDB_API_KEY.includes('SUA_') && !CONFIG.TMDB_API_KEY.includes('COLE_') ? 'SIM ✅' : 'NÃO ❌ - Cole em js/config.js');
-
+    console.log('CineRadar iniciando...');
     Navbar.render();
     FooterNav.render();
     Router.init();

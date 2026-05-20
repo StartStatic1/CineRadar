@@ -1,8 +1,8 @@
 // ==========================================
 // CONFIG - Chaves vem do servidor (Vercel)
 // ==========================================
-// NÃO cole chaves aqui. Configure em:
-// Vercel Dashboard → Settings → Environment Variables
+// NAO cole chaves aqui. Configure em:
+// Vercel Dashboard -> Settings -> Environment Variables
 
 const CONFIG = {
     PROXY_TMDB: '/api/tmdb',
@@ -13,7 +13,7 @@ const CONFIG = {
     REGION: 'BR',
     LANGUAGE: 'pt-BR',
 
-    // ===== PLAYERS (múltiplas fontes como IndicaAí) =====
+    // ===== PLAYERS (multiplas fontes) =====
     PLAYERS: [
         {
             id: 'betterflix',
@@ -85,7 +85,6 @@ const CONFIG = {
         }
     ],
 
-    // Fallbacks SVG inline base64 (nunca quebram)
     FALLBACKS: {
         netflix:    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI0U1MDkxNCIgcng9IjEyIi8+PHRleHQgeD0iNTAiIHk9IjY4IiBmb250LXNpemU9IjQyIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIj5ORjwvdGV4dD48L3N2Zz4=",
         prime:      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzAwQThFMSIgcng9IjEyIi8+PHRleHQgeD0iNTAiIHk9IjY4IiBmb250LXNpemU9IjQyIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIj5QVjwvdGV4dD48L3N2Zz4=",
@@ -99,7 +98,6 @@ const CONFIG = {
         youtube:    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI0ZGMDAwMCIgcng9IjEyIi8+PHRleHQgeD0iNTAiIHk9IjY4IiBmb250LXNpemU9IjQyIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIj5ZVDwvdGV4dD48L3N2Zz4="
     },
 
-    // Providers com logos oficiais (CDN JustWatch/Watchmode) + fallbacks base64
     PROVIDERS: {
         netflix:   { id: 8,   name: 'Netflix',      color: '#E50914', logo: 'https://cdn.watchmode.com/logos/203_logo_100px.jpg', fallbackKey: 'netflix' },
         prime:     { id: 119, name: 'Prime Video',  color: '#00A8E1', logo: 'https://cdn.watchmode.com/logos/26_logo_100px.jpg', fallbackKey: 'prime' },
@@ -113,14 +111,12 @@ const CONFIG = {
         youtube:   { id: 192, name: 'YouTube',      color: '#FF0000', logo: 'https://cdn.watchmode.com/logos/192_logo_100px.jpg', fallbackKey: 'youtube' }
     },
 
-    // Mapeamento TMDB provider_id → nossa chave
     TMDB_TO_KEY: {
         8: 'netflix', 119: 'prime', 337: 'disney', 1899: 'max',
         531: 'paramount', 350: 'apple', 283: 'crunchyroll', 73: 'loke',
         307: 'globoplay', 192: 'youtube'
     },
 
-    // Gêneros TMDB úteis
     GENRES: {
         ACTION: 28, ADVENTURE: 12, ANIMATION: 16, COMEDY: 35, CRIME: 80,
         DOCUMENTARY: 99, DRAMA: 18, FAMILY: 10751, FANTASY: 14, HISTORY: 36,
@@ -129,7 +125,6 @@ const CONFIG = {
     }
 };
 
-// Helper global para pegar fallback garantido
 function getProviderFallback(key) {
     const p = CONFIG.PROVIDERS[key];
     if (!p) return '';
