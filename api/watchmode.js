@@ -11,18 +11,31 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'WATCHMODE_API_KEY não configurada nas Environment Variables da Vercel' });
   }
 
+  if (!endpoint) {
+    return res.status(400).json({ error: 'Endpoint é obrigatório' });
+  }
+
   const url = new URL(`https://api.watchmode.com/v1${endpoint}`);
   url.searchParams.set('apiKey', key);
 
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) url.searchParams.set(k, v);
+    if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
   });
 
   try {
     const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({ 
+        error: `Watchmode API error: ${response.status}`, 
+        details: errorText 
+      });
+    }
+
     const data = await response.json();
     res.status(response.status).json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 }
