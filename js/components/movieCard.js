@@ -2,7 +2,7 @@ const MovieCard = {
     render(item, opts = {}) {
         const { showNumber, big = false } = opts;
         const type = item.media_type || (item.first_air_date ? 'tv' : 'movie');
-        const title = item.title || item.name || 'Sem título';
+        const title = item.title || item.name || 'Sem titulo';
         const rating = formatRating(item.vote_average);
         const year = (item.release_date || item.first_air_date || '').substring(0, 4);
         const poster = getImageUrl(item.poster_path, big ? 'w500' : 'w342');
@@ -18,7 +18,7 @@ const MovieCard = {
                         <div class="big-card-meta">
                             <span style="color:var(--warning)"><i class="fas fa-star"></i> ${rating}</span>
                             <span>${year}</span>
-                            <span class="badge badge-blue" style="font-size:0.7rem;padding:2px 8px">${type === 'movie' ? 'Filme' : 'Série'}</span>
+                            <span class="badge badge-blue" style="font-size:0.7rem;padding:2px 8px">${type === 'movie' ? 'Filme' : 'Serie'}</span>
                         </div>
                     </div>
                 </div>
@@ -35,7 +35,7 @@ const MovieCard = {
                             <button class="${isList ? 'active' : ''}" onclick="MovieCard.toggleList(event, ${item.id}, '${type}', '${title.replace(/'/g, "\'")}', '${item.poster_path || ''}')" title="${isList ? 'Remover' : 'Salvar'}">
                                 <i class="fas ${isList ? 'fa-check' : 'fa-plus'}"></i>
                             </button>
-                            <button class="${isWatched ? 'active watched' : ''}" onclick="MovieCard.toggleWatched(event, ${item.id}, '${type}', '${title.replace(/'/g, "\'")}', '${item.poster_path || ''}')" title="${isWatched ? 'Não assistido' : 'Assistido'}">
+                            <button class="${isWatched ? 'active watched' : ''}" onclick="MovieCard.toggleWatched(event, ${item.id}, '${type}', '${title.replace(/'/g, "\'")}', '${item.poster_path || ''}')" title="${isWatched ? 'Nao assistido' : 'Assistido'}">
                                 <i class="fas ${isWatched ? 'fa-eye-slash' : 'fa-eye'}"></i>
                             </button>
                         </div>

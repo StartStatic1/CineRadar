@@ -3,9 +3,9 @@ const Carousel = {
         const { icon = 'film', link = null, big = false, showNumbers = false } = opts;
         if (!items || !items.length) return '';
 
-        const cards = items.map((item, i) => MovieCard.render(item, { 
-            showNumber: showNumbers ? i + 1 : null, 
-            big 
+        const cards = items.map((item, i) => MovieCard.render(item, {
+            showNumber: showNumbers ? i + 1 : null,
+            big
         })).join('');
 
         return `
