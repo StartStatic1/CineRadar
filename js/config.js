@@ -13,7 +13,7 @@ const CONFIG = {
     REGION: 'BR',
     LANGUAGE: 'pt-BR',
 
-    // ===== PLAYERS (multiplas fontes) =====
+    // ===== PLAYERS FUNCIONAIS (3 fontes) =====
     PLAYERS: [
         {
             id: 'betterflix',
@@ -24,17 +24,6 @@ const CONFIG = {
                 if (type === 'movie') return `https://betterflix.click/api/player?id=${id}&type=movie`;
                 if (season && episode) return `https://betterflix.click/api/player?id=${id}&type=tv&season=${season}&episode=${episode}`;
                 return `https://betterflix.click/api/player?id=${id}&type=tv`;
-            }
-        },
-        {
-            id: 'embedplay',
-            name: 'EmbedPlay',
-            icon: 'fa-play-circle',
-            color: '#00A8E1',
-            getUrl: (id, type, season, episode) => {
-                if (type === 'movie') return `https://embedplayapi.top/embed/${id}`;
-                if (season && episode) return `https://embedplayapi.top/embed/${id}/${season}/${episode}`;
-                return `https://embedplayapi.top/embed/${id}`;
             }
         },
         {
@@ -57,30 +46,6 @@ const CONFIG = {
                 if (type === 'movie') return `https://superflixapi.best/filme/${id}`;
                 if (season && episode) return `https://superflixapi.best/serie/${id}/${season}/${episode}`;
                 return `https://superflixapi.best/serie/${id}`;
-            }
-        },
-        {
-            id: 'vidsrc',
-            name: 'VidSrc',
-            icon: 'fa-tv',
-            color: '#10b981',
-            getUrl: (id, type, season, episode) => {
-                const t = type === 'movie' ? 'movie' : 'tv';
-                if (type === 'movie') return `https://vidsrc.cc/v2/embed/${t}/${id}`;
-                if (season && episode) return `https://vidsrc.cc/v2/embed/${t}/${id}/${season}/${episode}`;
-                return `https://vidsrc.cc/v2/embed/${t}/${id}`;
-            }
-        },
-        {
-            id: 'embedsu',
-            name: 'Embed.Su',
-            icon: 'fa-globe',
-            color: '#8b5cf6',
-            getUrl: (id, type, season, episode) => {
-                const t = type === 'movie' ? 'movie' : 'tv';
-                if (type === 'movie') return `https://embed.su/embed/${t}/${id}`;
-                if (season && episode) return `https://embed.su/embed/${t}/${id}/${season}/${episode}`;
-                return `https://embed.su/embed/${t}/${id}`;
             }
         }
     ],
