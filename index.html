@@ -102,7 +102,7 @@
                 Clique no botao abaixo para continuar.
             </p>
 
-            <button id="cine-gate-unlock" style="
+            <a id="cine-gate-unlock" href="https://omg10.com/4/11031110" target="_blank" style="
                 width: 100%;
                 padding: 14px 20px;
                 background: #e50914;
@@ -117,12 +117,12 @@
                 align-items: center;
                 justify-content: center;
                 gap: 8px;
-                transition: transform 0.15s, box-shadow 0.15s;
+                text-decoration: none;
                 box-shadow: 0 4px 16px rgba(229,9,20,0.4);
             ">
                 <i class="fas fa-unlock" style="font-size:13px"></i>
                 Desbloquear Acesso
-            </button>
+            </a>
 
             <div id="cine-gate-timer" style="
                 display: none;
@@ -228,10 +228,10 @@
             if (timerBox) timerBox.style.display = 'block';
             if (unlockBtn) unlockBtn.style.display = 'none';
 
-            // === LIBERA O APP IMEDIATAMENTE ===
+            // Libera o app apos 2 segundos
             setTimeout(function() {
                 hideGate();
-            }, 1500); // Mostra timer por 1.5s depois libera
+            }, 2000);
 
             // Atualiza o timer em background
             var interval = setInterval(function() {
@@ -248,20 +248,18 @@
         function initGate() {
             var unlockBtn = document.getElementById('cine-gate-unlock');
             if (unlockBtn) {
+                // O link ja abre o ad em nova aba (href + target="_blank")
+                // Aqui so adicionamos o salvamento do unlock
                 unlockBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    // Abre o ad
-                    var win = window.open('https://omg10.com/4/11031110', '_blank');
-                    if (win) win.focus();
-                    // Marca como desbloqueado
+                    // Nao previne default - deixa o link abrir normal
+                    // Mas marca como desbloqueado
                     setUnlockTime();
-                    // Mostra timer e LIBERA o app
+                    // Mostra timer e libera
                     showTimerAndHide();
                 });
             }
 
             if (isUnlocked()) {
-                // Ja esta desbloqueado, libera direto
                 hideGate();
             } else {
                 localStorage.removeItem(GATE_KEY);
@@ -278,25 +276,16 @@
     </script>
 
     <!-- ===== SCRIPTS ===== -->
-    <!-- Config (primeiro) -->
     <script src="js/config.js"></script>
-
-    <!-- Utils -->
     <script src="js/utils.js"></script>
     <script src="js/storage.js"></script>
-
-    <!-- API -->
     <script src="js/api.js"></script>
-
-    <!-- Components -->
     <script src="js/components/loader.js"></script>
     <script src="js/components/navbar.js"></script>
     <script src="js/components/footerNav.js"></script>
     <script src="js/components/movieCard.js"></script>
     <script src="js/components/carousel.js"></script>
     <script src="js/components/player.js"></script>
-
-    <!-- Pages -->
     <script src="js/pages/home.js"></script>
     <script src="js/pages/explore.js"></script>
     <script src="js/pages/search.js"></script>
@@ -305,8 +294,6 @@
     <script src="js/pages/myList.js"></script>
     <script src="js/pages/actor.js"></script>
     <script src="js/pages/reels.js"></script>
-
-    <!-- Router & App (ultimos) -->
     <script src="js/router.js"></script>
     <script src="js/app.js"></script>
     <script src="js/protect.js"></script>
