@@ -46,7 +46,9 @@ const ExplorePage = {
                         ${Object.values(CONFIG.PROVIDERS).map(p => `
                             <div class="provider-item ${this.provider === p.id ? 'active' : ''}" onclick="ExplorePage.setProvider(${p.id})">
                                 <div class="provider-icon" style="background:transparent;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden">
-                                    <img src="${p.logo}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:4px" onerror="this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=color:white;font-weight:800;font-size:0.75rem>${p.name.substring(0,2)}</span>'">
+                                    <img src="${p.logo}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:4px" 
+                                        onerror="this.onerror=null; this.src='${p.fallbackLogo || ''}'; 
+                                            if(!this.src||this.src==='null'){this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=color:white;font-weight:800;font-size:0.75rem>${p.name.substring(0,2)}</span>'}">
                                 </div>
                                 <span>${p.name}</span>
                             </div>
