@@ -17,9 +17,27 @@ const Router = {
             const link = e.target.closest('a[href^="#/"]');
             if (link) { e.preventDefault(); this.navigate(link.getAttribute('href')); }
         });
+
+        // ===== CORRECAO: Libera scroll ao voltar de outra aba/app =====
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                const gateActive = document.getElementById('cine-gate-overlay')?.classList.contains('active');
+                if (!gateActive) {
+                    document.body.style.overflow = '';
+                    document.body.classList.remove('gate-locked');
+                }
+            }
+        });
     },
 
     handle() {
+        // ===== CORRECAO: Limpa scroll lock ao trocar de rota =====
+        const gateActive = document.getElementById('cine-gate-overlay')?.classList.contains('active');
+        if (!gateActive) {
+            document.body.style.overflow = '';
+            document.body.classList.remove('gate-locked');
+        }
+
         const hash = window.location.hash || '#/home';
         const [path] = hash.split('?');
         let matched = false;
