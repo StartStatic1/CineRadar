@@ -18,7 +18,6 @@ const Player = {
         return modal;
     },
 
-    // Abre player fullscreen (usado quando ja tem season/episode definidos)
     open(id, type, title, season = null, episode = null) {
         this.currentId = id;
         this.currentType = type;
@@ -65,7 +64,6 @@ const Player = {
                     <iframe id="player-iframe" src="${url}"
                         allowfullscreen
                         referrerpolicy="no-referrer"
-                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
                         style="width:100%; height:100%; border:none; position:absolute; inset:0;"
                     ></iframe>
 
@@ -155,7 +153,6 @@ const Player = {
 
     goBackToDetails() {
         this.close();
-        // Volta para pagina de detalhes
         if (this.currentId && this.currentType) {
             setTimeout(() => {
                 Router.navigate(`#/details/${this.currentType}/${this.currentId}`);
