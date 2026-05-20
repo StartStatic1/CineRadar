@@ -149,13 +149,6 @@ const DetailsPage = {
                             <button class="player-sheet-close" onclick="DetailsPage.closePlayerSheet()"><i class="fas fa-times"></i></button>
                         </div>
 
-                        <div class="player-sheet-audio" id="sheet-audio" style="display:none">
-                            <div class="audio-tabs">
-                                <button class="audio-tab active" data-audio="dub" onclick="DetailsPage.setAudio('dub')">Dublado</button>
-                                <button class="audio-tab" data-audio="leg" onclick="DetailsPage.setAudio('leg')">Legendado</button>
-                            </div>
-                        </div>
-
                         <div class="player-sheet-sources" id="sheet-sources"></div>
 
                         <div class="player-sheet-iframe-wrap">
@@ -178,7 +171,6 @@ const DetailsPage = {
         const validSeasons = seasons.filter(s => s.season_number > 0);
         if (!validSeasons.length) return '';
 
-        // Busca episodios da primeira temporada por padrao
         const firstSeason = validSeasons[0].season_number;
         let episodes = [];
         try {
@@ -193,7 +185,6 @@ const DetailsPage = {
             <div class="sinopse-section seasons-section">
                 <h3><i class="fas fa-tv" style="color:var(--accent);margin-right:8px"></i>Temporadas & Episodios</h3>
 
-                <!-- Tabs de Temporadas -->
                 <div class="season-tabs-scroll">
                     ${validSeasons.map(s => `
                         <button class="season-tab ${s.season_number === firstSeason ? 'active' : ''}" 
@@ -203,7 +194,6 @@ const DetailsPage = {
                     `).join('')}
                 </div>
 
-                <!-- Lista de Episodios -->
                 <div class="episodes-list" id="episodes-list">
                     ${this.renderEpisodesList(tvId, title, episodes)}
                 </div>
@@ -242,7 +232,6 @@ const DetailsPage = {
     },
 
     async selectSeason(tvId, title, seasonNum, btnEl) {
-        // Atualiza tabs visuais
         document.querySelectorAll('.season-tab').forEach(t => t.classList.remove('active'));
         if (btnEl) btnEl.classList.add('active');
 
@@ -251,7 +240,6 @@ const DetailsPage = {
             list.innerHTML = `<div class="episodes-loading"><div class="sheet-spinner"></div><p>Carregando episodios...</p></div>`;
         }
 
-        // Usa cache se ja temos
         let episodes = this.currentSeasonEpisodes[seasonNum];
         if (!episodes) {
             try {
@@ -268,29 +256,24 @@ const DetailsPage = {
         }
     },
 
-    // ===== BOTTOM SHEET DE PLAYERS =====
+    // ===== BOTTOM SHEET DE PLAYERS (SEM AUDIO TABS) =====
     openPlayerSheet(id, type, title, season = null, episode = null, episodeName = '') {
         const sheet = document.getElementById('player-sheet');
         const sheetTitle = document.getElementById('sheet-title');
         const sheetSubtitle = document.getElementById('sheet-subtitle');
-        const sheetAudio = document.getElementById('sheet-audio');
         const sheetSources = document.getElementById('sheet-sources');
         const iframe = document.getElementById('sheet-iframe');
         const loading = document.getElementById('sheet-loading');
 
         if (!sheet) return;
 
-        // Atualiza titulos
         sheetTitle.textContent = title;
         if (type === 'tv' && season && episode) {
             sheetSubtitle.textContent = `T${season} · E${episode}${episodeName ? ' — ' + episodeName : ''}`;
-            sheetAudio.style.display = 'block';
         } else {
             sheetSubtitle.textContent = type === 'movie' ? 'Filme' : 'Serie';
-            sheetAudio.style.display = 'none';
         }
 
-        // Renderiza fontes
         const activeIndex = parseInt(localStorage.getItem('cineradar_player') || '0');
         sheetSources.innerHTML = CONFIG.PLAYERS.map((p, i) => `
             <button class="source-chip ${i === activeIndex ? 'active' : ''}" 
@@ -302,11 +285,9 @@ const DetailsPage = {
             </button>
         `).join('');
 
-        // Abre sheet
         sheet.classList.add('open');
         document.body.style.overflow = 'hidden';
 
-        // Carrega player ativo
         this.switchPlayer(activeIndex, id, type, season, episode);
     },
 
@@ -326,7 +307,6 @@ const DetailsPage = {
         const iframe = document.getElementById('sheet-iframe');
         const loading = document.getElementById('sheet-loading');
 
-        // Atualiza chips visuais
         document.querySelectorAll('.source-chip').forEach((chip, i) => {
             const p = CONFIG.PLAYERS[i];
             chip.classList.toggle('active', i === index);
@@ -352,25 +332,14 @@ const DetailsPage = {
                     setTimeout(() => loading.style.display = 'none', 300);
                 }
             };
-
-            iframe.onerror = () => {
-                if (loading) loading.style.display = 'none';
-            };
         }
 
-        // Timeout fallback
         setTimeout(() => {
             const ld = document.getElementById('sheet-loading');
             if (ld && ld.style.display !== 'none') {
                 ld.innerHTML = `<div class="sheet-spinner" style="border-top-color:var(--warning)"></div><p style="color:var(--warning)">Demorando? Tente outra fonte.</p>`;
             }
         }, 8000);
-    },
-
-    setAudio(mode) {
-        document.querySelectorAll('.audio-tab').forEach(t => {
-            t.classList.toggle('active', t.dataset.audio === mode);
-        });
     },
 
     renderRelated(relatedData) {
