@@ -10,13 +10,14 @@ const HomePage = {
 
         try {
             // Busca paralela de todos os dados
-            const [trending, upcoming, popularMovies, popularTV, nowPlaying, topRatedMovies] = await Promise.all([
+            const [trending, upcoming, popularMovies, popularTV, nowPlaying, topRatedMovies, trashMovies] = await Promise.all([
                 API.getTrending('all', 1).catch(e => { console.log('Trending error:', e); return { results: [] }; }),
                 API.getUpcoming(1).catch(e => { console.log('Upcoming error:', e); return { results: [] }; }),
                 API.getPopularMovies(1).catch(e => { console.log('Popular movies error:', e); return { results: [] }; }),
                 API.getPopularTV(1).catch(e => { console.log('Popular TV error:', e); return { results: [] }; }),
                 API.getNowPlaying(1).catch(e => { console.log('Now playing error:', e); return { results: [] }; }),
-                API.getTopRated('movie', 1).catch(e => { console.log('Top rated error:', e); return { results: [] }; })
+                API.getTopRated('movie', 1).catch(e => { console.log('Top rated error:', e); return { results: [] }; }),
+                this.loadTrashMovies().catch(e => { console.log('Trash error:', e); return { results: [] }; })
             ]);
 
             // Coleta hero items de várias fontes para rotação
@@ -48,9 +49,6 @@ const HomePage = {
                 throw new Error('Sem dados - verifique sua API Key nas Environment Variables');
             }
 
-            // Busca seções por provider em paralelo (silencioso, não bloqueia)
-            const providerSections = await this.loadProviderSections();
-
             main.innerHTML = `
                 <div class="home-page">
                     <div id="hero-container">
@@ -66,14 +64,12 @@ const HomePage = {
                             showNumbers: true 
                         })}
 
-                        ${providerSections}
-
                         ${nowPlaying.results && nowPlaying.results.length ? Carousel.render('Nos Cinemas', nowPlaying.results.slice(0, 10), { 
                             icon: 'ticket-alt', 
                             link: '#/explore?type=movie' 
                         }) : ''}
 
-                        ${upcoming.results && upcoming.results.length ? Carousel.render('Lançamentos', upcoming.results.slice(0, 10), { 
+                        ${upcoming.results && upcoming.results.length ? Carousel.render('Lancamentos', upcoming.results.slice(0, 10), { 
                             icon: 'calendar', 
                             link: '#/calendar' 
                         }) : ''}
@@ -84,7 +80,7 @@ const HomePage = {
                             big: true 
                         }) : ''}
 
-                        ${popularTV.results && popularTV.results.length ? Carousel.render('Séries em Alta', popularTV.results.slice(0, 10), { 
+                        ${popularTV.results && popularTV.results.length ? Carousel.render('Series em Alta', popularTV.results.slice(0, 10), { 
                             icon: 'tv', 
                             link: '#/explore?type=tv', 
                             big: true 
@@ -94,11 +90,17 @@ const HomePage = {
                             icon: 'star', 
                             link: '#/explore?type=movie' 
                         }) : ''}
+
+                        ${trashMovies.results && trashMovies.results.length ? Carousel.render('Trash - Terror & Trash', trashMovies.results.slice(0, 10), { 
+                            icon: 'skull', 
+                            link: '#/explore?type=movie', 
+                            big: true 
+                        }) : ''}
                     </div>
                 </div>
             `;
 
-            // Inicia rotação do hero
+            // Inicia rotacao do hero
             this.startHeroRotation();
 
         } catch (err) {
@@ -113,10 +115,10 @@ const HomePage = {
                             <strong style="color:var(--text-primary)">Como corrigir:</strong>
                         </p>
                         <ol style="font-size:0.8rem;color:var(--text-secondary);padding-left:16px;line-height:1.8">
-                            <li>Vá no Dashboard da Vercel</li>
-                            <li>Settings → Environment Variables</li>
+                            <li>Va no Dashboard da Vercel</li>
+                            <li>Settings -> Environment Variables</li>
                             <li>Adicione <code style="background:var(--bg-tertiary);padding:2px 6px;border-radius:4px">TMDB_API_KEY</code> e <code style="background:var(--bg-tertiary);padding:2px 6px;border-radius:4px">WATCHMODE_API_KEY</code></li>
-                            <li>Faça <strong>Redeploy</strong> do projeto</li>
+                            <li>Faca <strong>Redeploy</strong> do projeto</li>
                         </ol>
                     </div>
                     <button class="btn btn-primary" onclick="location.reload()">
@@ -127,10 +129,30 @@ const HomePage = {
         }
     },
 
-    startHeroRotation() {
-        // Limpa interval anterior
-        if (this.heroInterval) clearInterval(this.heroInterval);
+    // Busca filmes Trash: terror antigo + comedia trash (nota baixa)
+    async loadTrashMovies() {
+        const horrorPromise = fetch(`${CONFIG.PROXY_TMDB}?endpoint=/discover/movie&with_genres=${CONFIG.GENRES.HORROR}&primary_release_date.lte=2005-12-31&vote_average.gte=3&vote_average.lte=6.5&sort_by=popularity.desc&vote_count.gte=20&page=1`)
+            .then(r => r.json()).catch(() => ({results: []}));
 
+        const comedyPromise = fetch(`${CONFIG.PROXY_TMDB}?endpoint=/discover/movie&with_genres=${CONFIG.GENRES.COMEDY}&primary_release_date.lte=2010-12-31&vote_average.gte=3&vote_average.lte=6&sort_by=popularity.desc&vote_count.gte=30&page=1`)
+            .then(r => r.json()).catch(() => ({results: []}));
+
+        const [horror, comedy] = await Promise.all([horrorPromise, comedyPromise]);
+
+        const merged = [...(horror.results || []), ...(comedy.results || [])];
+        // Remove duplicados
+        const unique = merged.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+        // Shuffle
+        for (let i = unique.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [unique[i], unique[j]] = [unique[j], unique[i]];
+        }
+
+        return { results: unique };
+    },
+
+    startHeroRotation() {
+        if (this.heroInterval) clearInterval(this.heroInterval);
         if (this.heroItems.length <= 1) return;
 
         this.heroInterval = setInterval(() => {
@@ -141,21 +163,15 @@ const HomePage = {
             const heroContainer = $('#hero-container');
             if (heroContainer) {
                 heroContainer.innerHTML = this.renderHero(item, type);
-                // Re-aplica event listeners
-                this.attachHeroEvents(item, type);
             }
-        }, 8000); // Muda a cada 8 segundos
-    },
-
-    attachHeroEvents(item, type) {
-        // Event listeners são inline no HTML
+        }, 8000);
     },
 
     renderHero(item, type) {
-        const title = item.title || item.name || 'Sem título';
+        const title = item.title || item.name || 'Sem titulo';
         const backdrop = getBackdropUrl(item.backdrop_path, 'w1280');
         const year = (item.release_date || item.first_air_date || '').substring(0, 4);
-        const heroTag = item.heroTag || (type === 'movie' ? 'Filme' : 'Série');
+        const heroTag = item.heroTag || (type === 'movie' ? 'Filme' : 'Serie');
 
         return `
             <div class="hero" id="active-hero">
@@ -173,12 +189,12 @@ const HomePage = {
                         </span>
                         <span class="year">${year}</span>
                         <span class="badge badge-green" style="font-size:0.75rem;padding:3px 10px">
-                            ${type === 'movie' ? 'Filme' : 'Série'}
+                            ${type === 'movie' ? 'Filme' : 'Serie'}
                         </span>
                     </div>
                     <p>${item.overview || ''}</p>
                     <div class="hero-actions">
-                        <button class="btn btn-secondary" onclick="MovieCard.toggleList(event, ${item.id}, '${type}', '${title.replace(/'/g, "\'")}', '${item.poster_path || ''}')">
+                        <button class="btn btn-secondary" onclick="MovieCard.toggleList(event, ${item.id}, '${type}', '${title.replace(/'/g, "\\'")}', '${item.poster_path || ''}')">
                             <i class="fas ${Storage.isInList(item.id, type) ? 'fa-check' : 'fa-plus'}"></i> 
                             ${Storage.isInList(item.id, type) ? 'Salvo' : 'Minha Lista'}
                         </button>
@@ -208,67 +224,25 @@ const HomePage = {
             heroContainer.innerHTML = this.renderHero(item, type);
         }
 
-        // Reinicia o timer
         if (this.heroInterval) clearInterval(this.heroInterval);
         this.startHeroRotation();
     },
 
     renderProviderStrip() {
-        const providers = Object.values(CONFIG.PROVIDERS).slice(0, 8);
+        const providers = Object.values(CONFIG.PROVIDERS).slice(0, 10);
         return `
             <div class="provider-strip">
                 ${providers.map(p => `
                     <div class="provider-item" onclick="Router.navigate('#/explore?provider=${p.id}')">
                         <div class="provider-icon" style="background:transparent;border:1.5px solid rgba(255,255,255,0.1);overflow:hidden">
                             <img src="${p.logo}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:4px" 
-                                onerror="this.onerror=null; this.src='${p.fallbackLogo || ''}'; 
-                                    if(!this.src||this.src==='null'){this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=color:white;font-weight:800;font-size:0.75rem>${p.name.substring(0,2)}</span>'}">
+                                onerror="this.onerror=null; this.src='${getProviderFallback(p.fallbackKey)}'; 
+                                    if(!this.src){this.style.display='none'; this.parentElement.style.background='${p.color}'; this.parentElement.innerHTML='<span style=color:white;font-weight:800;font-size:0.75rem>${p.name.substring(0,2)}</span>'}">
                         </div>
                         <span>${p.name}</span>
                     </div>
                 `).join('')}
             </div>
         `;
-    },
-
-    // Carrega seções por streaming (Netflix Top, Prime Top, etc)
-    async loadProviderSections() {
-        const providers = [
-            { key: 'netflix', type: 'movie' },
-            { key: 'prime', type: 'movie' },
-            { key: 'disney', type: 'movie' },
-            { key: 'max', type: 'tv' }
-        ];
-
-        const sections = [];
-
-        for (const p of providers) {
-            try {
-                const provider = CONFIG.PROVIDERS[p.key];
-                const data = await API.discoverByProvider(provider.id, p.type, 1);
-                if (data.results && data.results.length > 0) {
-                    sections.push(`
-                        <div class="provider-section">
-                            <div class="provider-section-header">
-                                <h2 class="provider-section-title">
-                                    <img src="${provider.logo}" alt="${provider.name}" 
-                                        onerror="this.onerror=null; this.src='${provider.fallbackLogo || ''}'; 
-                                            if(!this.src||this.src==='null'){this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-tv\'></i> ${provider.name}'}">
-                                    Top ${provider.name}
-                                </h2>
-                                <a href="#/explore?provider=${provider.id}&type=${p.type}" class="section-link">Ver todos <i class="fas fa-chevron-right"></i></a>
-                            </div>
-                            <div class="carousel-container">
-                                ${data.results.slice(0, 8).map(i => MovieCard.render(i)).join('')}
-                            </div>
-                        </div>
-                    `);
-                }
-            } catch (e) {
-                console.log(`Provider ${p.key} error:`, e.message);
-            }
-        }
-
-        return sections.join('');
     }
 };
