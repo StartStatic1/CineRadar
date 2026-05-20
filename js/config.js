@@ -14,7 +14,6 @@ const CONFIG = {
     LANGUAGE: 'pt-BR',
 
     // ===== PLAYERS (múltiplas fontes como IndicaAí) =====
-    // Cada player retorna iframe embed. O usuário escolhe no rodapé.
     PLAYERS: [
         {
             id: 'betterflix',
@@ -86,18 +85,18 @@ const CONFIG = {
         }
     ],
 
-    // Providers com logos oficiais (CDN JustWatch/Watchmode)
+    // Providers com logos oficiais (CDN JustWatch/Watchmode) + fallbacks
     PROVIDERS: {
-        netflix:   { id: 8,   name: 'Netflix',      color: '#E50914', logo: 'https://cdn.watchmode.com/logos/203_logo_100px.jpg' },
-        prime:     { id: 119, name: 'Prime Video',  color: '#00A8E1', logo: 'https://cdn.watchmode.com/logos/26_logo_100px.jpg' },
-        disney:    { id: 337, name: 'Disney+',      color: '#113CCF', logo: 'https://cdn.watchmode.com/logos/372_logo_100px.jpg' },
-        max:       { id: 1899,name: 'Max',          color: '#002BE7', logo: 'https://cdn.watchmode.com/logos/387_logo_100px.jpg' },
-        paramount: { id: 531, name: 'Paramount+',   color: '#0064FF', logo: 'https://cdn.watchmode.com/logos/531_logo_100px.jpg' },
-        apple:     { id: 350, name: 'Apple TV+',    color: '#1D1D1F', logo: 'https://cdn.watchmode.com/logos/371_logo_100px.jpg' },
-        crunchyroll:{id: 283, name: 'Crunchyroll',  color: '#F47521', logo: 'https://cdn.watchmode.com/logos/283_logo_100px.jpg' },
-        loke:      { id: 73,  name: 'Looke',        color: '#1E3A8A', logo: 'https://cdn.watchmode.com/logos/73_logo_100px.jpg' },
-        globoplay: { id: 307, name: 'Globoplay',    color: '#ED3B85', logo: 'https://cdn.watchmode.com/logos/307_logo_100px.jpg' },
-        youtube:   { id: 192, name: 'YouTube',      color: '#FF0000', logo: 'https://cdn.watchmode.com/logos/192_logo_100px.jpg' }
+        netflix:   { id: 8,   name: 'Netflix',      color: '#E50914', logo: 'https://cdn.watchmode.com/logos/203_logo_100px.jpg', fallbackLogo: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg' },
+        prime:     { id: 119, name: 'Prime Video',  color: '#00A8E1', logo: 'https://cdn.watchmode.com/logos/26_logo_100px.jpg', fallbackLogo: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png' },
+        disney:    { id: 337, name: 'Disney+',      color: '#113CCF', logo: 'https://cdn.watchmode.com/logos/372_logo_100px.jpg', fallbackLogo: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg' },
+        max:       { id: 1899,name: 'Max',          color: '#002BE7', logo: 'https://cdn.watchmode.com/logos/387_logo_100px.jpg', fallbackLogo: 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Max_logo.svg' },
+        paramount: { id: 531, name: 'Paramount+',   color: '#0064FF', logo: 'https://cdn.watchmode.com/logos/531_logo_100px.jpg', fallbackLogo: 'https://upload.wikimedia.org/wikipedia/commons/4/4e/Paramount%2B_logo.svg' },
+        apple:     { id: 350, name: 'Apple TV+',    color: '#1D1D1F', logo: 'https://cdn.watchmode.com/logos/371_logo_100px.jpg', fallbackLogo: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg' },
+        crunchyroll:{id: 283, name: 'Crunchyroll',  color: '#F47521', logo: 'https://cdn.watchmode.com/logos/283_logo_100px.jpg', fallbackLogo: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_logo.svg' },
+        loke:      { id: 73,  name: 'Looke',        color: '#1E3A8A', logo: 'https://cdn.watchmode.com/logos/73_logo_100px.jpg', fallbackLogo: '' },
+        globoplay: { id: 307, name: 'Globoplay',    color: '#ED3B85', logo: 'https://cdn.watchmode.com/logos/307_logo_100px.jpg', fallbackLogo: '' },
+        youtube:   { id: 192, name: 'YouTube',      color: '#FF0000', logo: 'https://cdn.watchmode.com/logos/192_logo_100px.jpg', fallbackLogo: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Youtube_logo.png' }
     },
 
     // Mapeamento TMDB provider_id → nossa chave
