@@ -35,19 +35,19 @@
 </head>
 <body>
     <!-- Navbar -->
-    <div id="navbar-container"></div>
+    <div id="navbar-container" data-no-ad></div>
 
     <!-- Toast -->
-    <div id="toast-container"></div>
+    <div id="toast-container" data-no-ad></div>
 
     <!-- Player Modal -->
-    <div id="player-modal"></div>
+    <div id="player-modal" data-no-ad></div>
 
     <!-- Main Content -->
     <main id="main-content"></main>
 
     <!-- Footer Nav -->
-    <div id="footer-container"></div>
+    <div id="footer-container" data-no-ad></div>
 
     <!-- ===== GATE DE ACESSO - ESTILO CINERADAR ===== -->
     <div id="cine-gate-overlay" style="
@@ -179,142 +179,142 @@
         }
     </style>
 
-           <script>
-(function() {
-    'use strict';
+    <script>
+    (function() {
+        'use strict';
 
-    var GATE_KEY = 'cineradar_gate_unlock';
-    var GATE_DURATION = 5 * 60 * 60 * 1000;
+        var GATE_KEY = 'cineradar_gate_unlock';
+        var GATE_DURATION = 5 * 60 * 60 * 1000;
 
-    // ===== 2 LINKS DE ANÚNCIO (alternância aleatória) =====
-    var AD_LINKS = [
-        { url: 'https://omg10.com/4/11031110', label: 'Assistir Agora', color: '#e50914' },
-        { url: 'https://omg10.com/4/11033789', label: 'Assistir Agora 2', color: '#6366f1' }
-    ];
+        // ===== 2 LINKS DE ANÚNCIO (alternância aleatória) =====
+        var AD_LINKS = [
+            { url: 'https://omg10.com/4/11031110', label: 'Assistir Agora', color: '#e50914' },
+            { url: 'https://omg10.com/4/11033789', label: 'Assistir Agora 2', color: '#6366f1' }
+        ];
 
-    function getAd() {
-        var idx = parseInt(localStorage.getItem('cineradar_ad_index') || '-1');
-        // Alterna entre os links a cada exibição
-        idx = (idx + 1) % AD_LINKS.length;
-        localStorage.setItem('cineradar_ad_index', idx.toString());
-        return AD_LINKS[idx];
-    }
-
-    function getUnlockTime() {
-        var raw = localStorage.getItem(GATE_KEY);
-        return raw ? parseInt(raw, 10) : 0;
-    }
-
-    function setUnlockTime() {
-        localStorage.setItem(GATE_KEY, Date.now().toString());
-    }
-
-    function isUnlocked() {
-        var unlockedAt = getUnlockTime();
-        if (!unlockedAt) return false;
-        var elapsed = Date.now() - unlockedAt;
-        return elapsed < GATE_DURATION;
-    }
-
-    function getRemainingTime() {
-        var unlockedAt = getUnlockTime();
-        if (!unlockedAt) return 0;
-        var remaining = GATE_DURATION - (Date.now() - unlockedAt);
-        return Math.max(0, remaining);
-    }
-
-    function formatTime(ms) {
-        var totalSeconds = Math.floor(ms / 1000);
-        var h = Math.floor(totalSeconds / 3600);
-        var m = Math.floor((totalSeconds % 3600) / 60);
-        var s = totalSeconds % 60;
-        return (h < 10 ? '0' : '') + h + ':' +
-               (m < 10 ? '0' : '') + m + ':' +
-               (s < 10 ? '0' : '') + s;
-    }
-
-    function showGate() {
-        var overlay = document.getElementById('cine-gate-overlay');
-        if (!overlay) return;
-        overlay.classList.add('active');
-        document.body.classList.add('gate-locked');
-    }
-
-    function hideGate() {
-        var overlay = document.getElementById('cine-gate-overlay');
-        if (!overlay) return;
-        overlay.classList.remove('active');
-        document.body.classList.remove('gate-locked');
-    }
-
-    function showTimerAndHide() {
-        var timerBox = document.getElementById('cine-gate-timer');
-        var countdown = document.getElementById('cine-gate-countdown');
-        var unlockBtn = document.getElementById('cine-gate-unlock');
-
-        if (timerBox) timerBox.style.display = 'block';
-        if (unlockBtn) {
-            unlockBtn.innerHTML = '<i class="fas fa-check" style="font-size:11px"></i> Liberado!';
-            unlockBtn.style.background = '#00ff88';
-            unlockBtn.style.boxShadow = '0 4px 20px rgba(0,255,136,0.3)';
-            unlockBtn.style.pointerEvents = 'none'; // evita cliques duplos
+        function getAd() {
+            var idx = parseInt(localStorage.getItem('cineradar_ad_index') || '-1');
+            // Alterna entre os links a cada exibição
+            idx = (idx + 1) % AD_LINKS.length;
+            localStorage.setItem('cineradar_ad_index', idx.toString());
+            return AD_LINKS[idx];
         }
 
-        setTimeout(function() {
-            hideGate();
-        }, 1500);
+        function getUnlockTime() {
+            var raw = localStorage.getItem(GATE_KEY);
+            return raw ? parseInt(raw, 10) : 0;
+        }
 
-        var interval = setInterval(function() {
-            var remaining = getRemainingTime();
-            if (remaining <= 0) {
-                clearInterval(interval);
-                localStorage.removeItem(GATE_KEY);
-                return;
+        function setUnlockTime() {
+            localStorage.setItem(GATE_KEY, Date.now().toString());
+        }
+
+        function isUnlocked() {
+            var unlockedAt = getUnlockTime();
+            if (!unlockedAt) return false;
+            var elapsed = Date.now() - unlockedAt;
+            return elapsed < GATE_DURATION;
+        }
+
+        function getRemainingTime() {
+            var unlockedAt = getUnlockTime();
+            if (!unlockedAt) return 0;
+            var remaining = GATE_DURATION - (Date.now() - unlockedAt);
+            return Math.max(0, remaining);
+        }
+
+        function formatTime(ms) {
+            var totalSeconds = Math.floor(ms / 1000);
+            var h = Math.floor(totalSeconds / 3600);
+            var m = Math.floor((totalSeconds % 3600) / 60);
+            var s = totalSeconds % 60;
+            return (h < 10 ? '0' : '') + h + ':' +
+                   (m < 10 ? '0' : '') + m + ':' +
+                   (s < 10 ? '0' : '') + s;
+        }
+
+        function showGate() {
+            var overlay = document.getElementById('cine-gate-overlay');
+            if (!overlay) return;
+            overlay.classList.add('active');
+            document.body.classList.add('gate-locked');
+        }
+
+        function hideGate() {
+            var overlay = document.getElementById('cine-gate-overlay');
+            if (!overlay) return;
+            overlay.classList.remove('active');
+            document.body.classList.remove('gate-locked');
+        }
+
+        function showTimerAndHide() {
+            var timerBox = document.getElementById('cine-gate-timer');
+            var countdown = document.getElementById('cine-gate-countdown');
+            var unlockBtn = document.getElementById('cine-gate-unlock');
+
+            if (timerBox) timerBox.style.display = 'block';
+            if (unlockBtn) {
+                unlockBtn.innerHTML = '<i class="fas fa-check" style="font-size:11px"></i> Liberado!';
+                unlockBtn.style.background = '#00ff88';
+                unlockBtn.style.boxShadow = '0 4px 20px rgba(0,255,136,0.3)';
+                unlockBtn.style.pointerEvents = 'none'; // evita cliques duplos
             }
-            if (countdown) countdown.textContent = formatTime(remaining);
-        }, 1000);
-    }
 
-    function initGate() {
-        var unlockBtn = document.getElementById('cine-gate-unlock');
-        var ad = getAd();
+            setTimeout(function() {
+                hideGate();
+            }, 1500);
 
-        if (unlockBtn) {
-            // Atualiza link e cor do botão conforme o anúncio ativo
-            unlockBtn.href = ad.url;
-            unlockBtn.style.background = ad.color;
-            unlockBtn.style.boxShadow = '0 4px 20px ' + ad.color + '59';
-            unlockBtn.querySelector('span')?.remove();
-            var span = document.createElement('span');
-            span.textContent = ad.label;
-            unlockBtn.appendChild(span);
-
-            unlockBtn.addEventListener('click', function(e) {
-                // Só libera se for o link principal (não quando já está liberado)
-                if (!isUnlocked()) {
-                    setUnlockTime();
-                    showTimerAndHide();
+            var interval = setInterval(function() {
+                var remaining = getRemainingTime();
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    localStorage.removeItem(GATE_KEY);
+                    return;
                 }
-            });
+                if (countdown) countdown.textContent = formatTime(remaining);
+            }, 1000);
         }
 
-        if (isUnlocked()) {
-            hideGate();
+        function initGate() {
+            var unlockBtn = document.getElementById('cine-gate-unlock');
+            var ad = getAd();
+
+            if (unlockBtn) {
+                // Atualiza link e cor do botão conforme o anúncio ativo
+                unlockBtn.href = ad.url;
+                unlockBtn.style.background = ad.color;
+                unlockBtn.style.boxShadow = '0 4px 20px ' + ad.color + '59';
+                unlockBtn.querySelector('span')?.remove();
+                var span = document.createElement('span');
+                span.textContent = ad.label;
+                unlockBtn.appendChild(span);
+
+                unlockBtn.addEventListener('click', function(e) {
+                    // Só libera se for o link principal (não quando já está liberado)
+                    if (!isUnlocked()) {
+                        setUnlockTime();
+                        showTimerAndHide();
+                    }
+                });
+            }
+
+            if (isUnlocked()) {
+                hideGate();
+            } else {
+                localStorage.removeItem(GATE_KEY);
+                showGate();
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGate);
         } else {
-            localStorage.removeItem(GATE_KEY);
-            showGate();
+            initGate();
         }
-    }
+    })();
+    </script>
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initGate);
-    } else {
-        initGate();
-    }
-})();
-</script>
-                 
-    <!-- ===== SCRIPTS ===== -->
+    <!-- ===== SCRIPTS DO APP ===== -->
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/storage.js"></script>
@@ -336,5 +336,11 @@
     <script src="js/router.js"></script>
     <script src="js/app.js"></script>
     <script src="js/protect.js"></script>
+
+    <!-- ===== SCRIPTS DE MONETIZAÇÃO ===== -->
+    <!-- AdGate: modal por ação (cooldown 20min) -->
+    <script src="js/adGate.js"></script>
+    <!-- Monetag OnClick: popunder controlado (cooldown 45s, max 8/session) -->
+    <script src="js/monetagOnclick.js"></script>
 </body>
 </html>
