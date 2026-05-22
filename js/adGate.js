@@ -1,7 +1,7 @@
 /**
  * CineRadar AdGate Modal System
- * Modal de desbloqueio por ação - Monetag Direct Link
- * Versão: 1.0.0
+ * Modal de desbloqueio por ação — Direct Link fixo: https://omg10.com/4/11031110
+ * Versão: 1.1.0
  */
 
 (function() {
@@ -14,7 +14,7 @@
         SESSION_KEY: 'cr_adgate_unlock',
         LAST_ACTION_KEY: 'cr_adgate_last_action',
         ANIMATION_DURATION: 400,
-        AUTO_CLOSE_DELAY: 1800         // ms para fechar após clique no anúncio
+        AUTO_CLOSE_DELAY: 1800
     };
 
     // ===== ESTADO =====
@@ -53,18 +53,13 @@
     }
 
     function canShowForAction(actionType) {
-        // Só mostra se passou o cooldown OU se é ação diferente da última
         if (isUnlocked()) return false;
-
         const lastAction = localStorage.getItem(CONFIG.LAST_ACTION_KEY);
         const now = Date.now();
-
-        // Se for mesma ação em menos de 5 min, ignora (evita spam)
         if (lastAction === actionType) {
             const lastTime = parseInt(localStorage.getItem('cr_adgate_last_time') || '0');
             if (now - lastTime < 5 * 60 * 1000) return false;
         }
-
         return true;
     }
 
@@ -110,7 +105,6 @@
             </div>
         `;
 
-        // Estilos inline (não depende de CSS externo)
         const style = document.createElement('style');
         style.textContent = `
             #cr-adgate-modal {
@@ -268,19 +262,15 @@
         document.body.appendChild(div);
         modalEl = div;
 
-        // Eventos
         modalEl.querySelector('.cr-adgate-close').addEventListener('click', closeModal);
         modalEl.querySelector('.cr-adgate-backdrop').addEventListener('click', closeModal);
 
-        // Botão principal: registra unlock e agenda fechamento
         const btn = modalEl.querySelector('.cr-adgate-btn');
         btn.addEventListener('click', function(e) {
-            // Não previne default — deixa abrir o link normalmente
             setUnlockTime();
             showSuccessAndClose();
         });
 
-        // Tecla ESC fecha
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && isOpen) closeModal();
         });
@@ -299,7 +289,6 @@
         pendingAction = callback;
         registerAction(actionType);
 
-        // Reset visual
         const timer = modalEl.querySelector('.cr-adgate-timer');
         const btn = modalEl.querySelector('.cr-adgate-btn');
         timer.style.display = 'none';
@@ -310,8 +299,6 @@
 
         modalEl.classList.add('active');
         isOpen = true;
-
-        // Foco acessibilidade
         setTimeout(() => btn.focus(), 100);
     }
 
@@ -319,12 +306,9 @@
         if (!modalEl) return;
         modalEl.classList.remove('active');
         isOpen = false;
-
-        // Executa ação pendente se existir (mesmo sem clique no anúncio)
         if (pendingAction) {
             const fn = pendingAction;
             pendingAction = null;
-            // Pequeno delay para animação fechar
             setTimeout(fn, 300);
         }
     }
@@ -340,7 +324,7 @@
         let seconds = 3;
         countdown.textContent = seconds;
 
-        const interval = setInterval(() => {
+        const interval = setInterval(function() {
             seconds--;
             countdown.textContent = seconds;
             if (seconds <= 0) {
@@ -352,47 +336,25 @@
 
     // ===== API PÚBLICA =====
     window.AdGate = {
-        /**
-         * Abre modal para uma ação específica.
-         * @param {string} action - Tipo da ação: 'play', 'navigate', 'search', 'details', etc.
-         * @param {Function} onUnlock - Callback executado após desbloqueio (ou imediatamente se já liberado)
-         * @returns {boolean} - true se o modal foi aberto, false se já estava liberado
-         */
         request: function(action, onUnlock) {
             if (typeof action !== 'string') action = 'generic';
-
             if (isUnlocked()) {
                 if (onUnlock) onUnlock();
                 return false;
             }
-
             openModal(action, onUnlock);
             return true;
         },
 
-        /**
-         * Verifica se está liberado
-         */
         isUnlocked: isUnlocked,
-
-        /**
-         * Tempo restante do cooldown em ms
-         */
         getRemaining: getRemainingCooldown,
 
-        /**
-         * Força reset do cooldown (debug)
-         */
         reset: function() {
             localStorage.removeItem(CONFIG.SESSION_KEY);
             localStorage.removeItem(CONFIG.LAST_ACTION_KEY);
             localStorage.removeItem('cr_adgate_last_time');
         },
 
-        /**
-         * Hook automático em elementos com data-adgate
-         * Use: <button data-adgate="play" data-adgate-action="Player.open(123)">
-         */
         autoHook: function() {
             document.addEventListener('click', function(e) {
                 const el = e.target.closest('[data-adgate]');
@@ -401,20 +363,14 @@
                 const actionType = el.dataset.adgate || 'generic';
                 const actionCode = el.dataset.adgateAction;
 
-                // Se já liberado, deixa passar
                 if (isUnlocked()) return;
-
-                // Se não pode mostrar agora, deixa passar
                 if (!canShowForAction(actionType)) return;
 
-                // Previne ação original
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Monta callback
                 const callback = function() {
                     if (actionCode) {
-                        // Executa código string (cuidado!)
                         try {
                             const fn = new Function(actionCode);
                             fn();
@@ -429,7 +385,7 @@
                 };
 
                 openModal(actionType, callback);
-            }, true); // useCapture para pegar antes
+            }, true);
         }
     };
 
@@ -442,5 +398,5 @@
         window.AdGate.autoHook();
     }
 
-    console.log('[AdGate] Sistema carregado. Cooldown: 20min');
+    console.log('[AdGate] Sistema carregado. Link fixo: 11031110. Cooldown: 20min');
 })();
