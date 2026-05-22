@@ -35,19 +35,19 @@
 </head>
 <body>
     <!-- Navbar -->
-    <div id="navbar-container" data-no-ad></div>
+    <div id="navbar-container"></div>
 
     <!-- Toast -->
-    <div id="toast-container" data-no-ad></div>
+    <div id="toast-container"></div>
 
     <!-- Player Modal -->
-    <div id="player-modal" data-no-ad></div>
+    <div id="player-modal"></div>
 
     <!-- Main Content -->
     <main id="main-content"></main>
 
     <!-- Footer Nav -->
-    <div id="footer-container" data-no-ad></div>
+    <div id="footer-container"></div>
 
     <!-- ===== GATE DE ACESSO - ESTILO CINERADAR ===== -->
     <div id="cine-gate-overlay" style="
@@ -186,7 +186,6 @@
         var GATE_KEY = 'cineradar_gate_unlock';
         var GATE_DURATION = 5 * 60 * 60 * 1000;
 
-        // ===== 2 LINKS DE ANÚNCIO (alternância aleatória) =====
         var AD_LINKS = [
             { url: 'https://omg10.com/4/11031110', label: 'Assistir Agora', color: '#e50914' },
             { url: 'https://omg10.com/4/11033789', label: 'Assistir Agora 2', color: '#6366f1' }
@@ -194,7 +193,6 @@
 
         function getAd() {
             var idx = parseInt(localStorage.getItem('cineradar_ad_index') || '-1');
-            // Alterna entre os links a cada exibição
             idx = (idx + 1) % AD_LINKS.length;
             localStorage.setItem('cineradar_ad_index', idx.toString());
             return AD_LINKS[idx];
@@ -257,7 +255,7 @@
                 unlockBtn.innerHTML = '<i class="fas fa-check" style="font-size:11px"></i> Liberado!';
                 unlockBtn.style.background = '#00ff88';
                 unlockBtn.style.boxShadow = '0 4px 20px rgba(0,255,136,0.3)';
-                unlockBtn.style.pointerEvents = 'none'; // evita cliques duplos
+                unlockBtn.style.pointerEvents = 'none';
             }
 
             setTimeout(function() {
@@ -280,7 +278,6 @@
             var ad = getAd();
 
             if (unlockBtn) {
-                // Atualiza link e cor do botão conforme o anúncio ativo
                 unlockBtn.href = ad.url;
                 unlockBtn.style.background = ad.color;
                 unlockBtn.style.boxShadow = '0 4px 20px ' + ad.color + '59';
@@ -290,7 +287,6 @@
                 unlockBtn.appendChild(span);
 
                 unlockBtn.addEventListener('click', function(e) {
-                    // Só libera se for o link principal (não quando já está liberado)
                     if (!isUnlocked()) {
                         setUnlockTime();
                         showTimerAndHide();
@@ -337,10 +333,7 @@
     <script src="js/app.js"></script>
     <script src="js/protect.js"></script>
 
-    <!-- ===== SCRIPTS DE MONETIZAÇÃO ===== -->
-    <!-- AdGate: modal por ação (cooldown 20min) -->
+    <!-- ===== ADGATE: MODAL POR AÇÃO (DIRECT LINK 11031110) ===== -->
     <script src="js/adGate.js"></script>
-    <!-- Monetag OnClick: popunder controlado (cooldown 45s, max 8/session) -->
-    <script src="js/monetagOnclick.js"></script>
 </body>
 </html>
