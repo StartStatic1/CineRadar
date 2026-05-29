@@ -62,6 +62,7 @@ const Player = {
                 <!-- Body -->
                 <div style="flex:1; position:relative; background:#000;">
                     <iframe id="player-iframe" src="${url}"
+                        allow="fullscreen; autoplay; encrypted-media"
                         allowfullscreen
                         referrerpolicy="no-referrer"
                         style="width:100%; height:100%; border:none; position:absolute; inset:0;"
@@ -146,6 +147,9 @@ const Player = {
                 `;
             }
         }, 10000);
+
+        // === FORÇA LANDSCAPE NO MOBILE ===
+        this.lockOrientation();
 
         this.setupFullscreenHandler();
         this.addToHistory(id, type, title);
@@ -240,6 +244,22 @@ const Player = {
         document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     },
 
+    // === NOVO: BLOQUEIA ORIENTAÇÃO EM LANDSCAPE ===
+    lockOrientation() {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {
+                // Fallback silencioso se não suportado
+            });
+        }
+    },
+
+    // === NOVO: LIBERA ORIENTAÇÃO ===
+    unlockOrientation() {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
+    },
+
     addToHistory(id, type, title) {
         const entry = { id, type, title, watchedAt: new Date().toISOString() };
         this.playerHistory = this.playerHistory.filter(h => !(h.id === id && h.type === type));
@@ -249,6 +269,9 @@ const Player = {
     },
 
     close() {
+        // Libera orientação ao fechar
+        this.unlockOrientation();
+
         const modal = document.getElementById('player-modal');
         if (modal) {
             const overlay = document.getElementById('player-overlay');
