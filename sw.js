@@ -1,9 +1,9 @@
 // ==========================================
 // SERVICE WORKER — CineRadar PWA
 // ==========================================
-// v2.1 — Proxy HTTP corrigido (remove no-cors que impedia leitura)
+// v2.3 FINAL — NÃO cacheia respostas de erro da API (evita 404 stale)
 
-const CACHE_NAME = 'cineradar-v2';
+const CACHE_NAME = 'cineradar-v3-' + new Date().toISOString().slice(0,10);
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -43,13 +43,14 @@ const STATIC_ASSETS = [
 ];
 
 // ==========================================
-// INSTALL — Cacheia assets estáticos
+// INSTALL
 // ==========================================
 self.addEventListener('install', (event) => {
+    console.log('[SW] v2.3 instalando...');
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(STATIC_ASSETS).catch(() => {
-                console.log('[SW] Alguns assets não puderam ser cacheados');
+                console.log('[SW] Alguns assets nao puderam ser cacheados');
             });
         })
     );
@@ -57,53 +58,40 @@ self.addEventListener('install', (event) => {
 });
 
 // ==========================================
-// ACTIVATE — Limpa caches antigos
+// ACTIVATE — Limpa TODOS os caches antigos
 // ==========================================
 self.addEventListener('activate', (event) => {
+    console.log('[SW] v2.3 ativando...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
-                cacheNames
-                    .filter((name) => name !== CACHE_NAME)
-                    .map((name) => caches.delete(name))
+                cacheNames.map((name) => caches.delete(name))
             );
-        })
+        }).then(() => self.clients.claim())
     );
-    self.clients.claim();
 });
 
 // ==========================================
-// FETCH — Proxy para HTTP + Cache Strategy
+// FETCH — API: Network Only (sem cache!) + Static: Cache First
 // ==========================================
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // --- STRATEGY 1: Proxy para HTTP (IPTV/Mixed Content) ---
-    // O SW roda em HTTPS e pode fazer fetch para HTTP sem mixed-content block
+    // --- STRATEGY 1: API calls (TMDB, Watchmode, OMDb) — NETWORK ONLY ---
+    // NUNCA cacheia API para evitar 404 stale
+    if (url.pathname.startsWith('/api/')) {
+        event.respondWith(fetch(request));
+        return;
+    }
+
+    // --- STRATEGY 2: HTTP (IPTV) — passa direto (SW pode fazer HTTP) ---
     if (url.protocol === 'http:' && !url.hostname.includes('localhost')) {
         event.respondWith(
             fetch(request).catch((err) => {
                 console.log('[SW] HTTP fetch falhou:', err.message);
                 return new Response('HTTP blocked', { status: 403 });
             })
-        );
-        return;
-    }
-
-    // --- STRATEGY 2: API calls (TMDB, etc) — Network First ---
-    if (url.pathname.startsWith('/api/')) {
-        event.respondWith(
-            fetch(request)
-                .then((response) => {
-                    // Só cacheia respostas OK (não 404/500)
-                    if (response.ok && response.status === 200) {
-                        const clone = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-                    }
-                    return response;
-                })
-                .catch(() => caches.match(request))
         );
         return;
     }
@@ -125,28 +113,17 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // --- STRATEGY 4: Default — Network Only ---
+    // --- STRATEGY 4: Default ---
     event.respondWith(fetch(request));
 });
 
 // ==========================================
-// MESSAGE — Proxy fetch via SW (para bypass CORS em HTTPS)
-// ==========================================
-// NOTA: mode: 'no-cors' foi REMOVIDO porque retorna resposta opaque
-// que não pode ser lida com .text(). Para HTTP, o fetch event acima
-// já intercepta automaticamente. Para HTTPS com CORS, este proxy
-// tenta fetch normal e retorna erro se CORS bloquear.
+// MESSAGE — Proxy fetch via SW
 // ==========================================
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'PROXY_FETCH') {
         const { url } = event.data;
-
-        fetch(url, { 
-            cache: 'no-cache',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-        })
+        fetch(url, { cache: 'no-cache' })
         .then(async (response) => {
             const text = await response.text();
             event.ports[0].postMessage({ 
@@ -158,5 +135,8 @@ self.addEventListener('message', (event) => {
         .catch((err) => {
             event.ports[0].postMessage({ error: err.message });
         });
+    }
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
     }
 });
