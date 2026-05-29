@@ -1,16 +1,15 @@
 // ==========================================
 // IPTV - Player de Listas M3U/M3U8
 // ==========================================
-// SOLUÇÃO: Proxy via Service Worker para contornar HTTP bloqueado em PWA
-// Fallback: Abre stream em nova aba se proxy falhar
+// v2.1 — Simplificado: usa fetch direto (SW intercepta HTTP automaticamente)
+// Fallback: Abre stream em nova aba se falhar
 
 const IPTV = {
-    // URL da lista M3U (pode ser HTTP!) — editável apenas no código
-    // Troque aqui quando uma lista cair. NÃO expõe input pro usuário.
+    // URL da lista M3U — editável apenas no código
     DEFAULT_LIST_URL: 'http://kavru.com/get.php?username=558396043519&password=64537505&type=m3u_plus&output=ts',
 
     // URL alternativa (fallback interno)
-    FALLBACK_LIST_URL: '',  // Deixe vazio ou preencha outra lista
+    FALLBACK_LIST_URL: '',
 
     channels: [],
     currentChannel: null,
@@ -45,7 +44,7 @@ const IPTV = {
                     </div>
                 </div>
 
-                <!-- Fallback externo (iframe/nova aba) -->
+                <!-- Fallback externo -->
                 <div class="iptv-fallback-box" id="iptv-fallback-box" style="display:none;">
                     <div class="iptv-fallback-msg">
                         <i class="fas fa-external-link-alt" style="font-size:2rem; color:var(--primary);"></i>
@@ -105,13 +104,13 @@ const IPTV = {
         script.onload = callback;
         script.onerror = () => {
             console.warn('HLS.js falhou ao carregar');
-            callback(); // Continua mesmo sem HLS
+            callback();
         };
         document.head.appendChild(script);
     },
 
     // ==========================================
-    // CARREGA CANAIS — COM PROXY VIA SERVICE WORKER
+    // CARREGA CANAIS — Fetch direto (SW intercepta HTTP)
     // ==========================================
     async loadChannels(url) {
         const grid = document.getElementById('iptv-grid');
@@ -125,26 +124,29 @@ const IPTV = {
         `;
 
         try {
-            // TENTATIVA 1: Proxy via Service Worker (se registrado)
-            let text = await this.fetchViaProxy(url);
+            // TENTATIVA 1: Fetch direto (SW intercepta HTTP automaticamente)
+            let text = null;
+            try {
+                const res = await fetch(url, { 
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                if (res.ok) text = await res.text();
+            } catch(e) {
+                console.log('Fetch direto falhou:', e.message);
+            }
 
-            // TENTATIVA 2: Fetch direto (se for HTTPS ou mixed content permitido)
-            if (!text) {
+            // TENTATIVA 2: Fallback URL
+            if (!text && this.FALLBACK_LIST_URL) {
                 try {
-                    const res = await fetch(url, { 
+                    const res = await fetch(this.FALLBACK_LIST_URL, { 
                         method: 'GET',
-                        mode: 'cors',
                         cache: 'no-cache'
                     });
                     if (res.ok) text = await res.text();
                 } catch(e) {
-                    console.log('Fetch direto falhou:', e.message);
+                    console.log('Fetch fallback falhou:', e.message);
                 }
-            }
-
-            // TENTATIVA 3: Fallback URL
-            if (!text && this.FALLBACK_LIST_URL) {
-                text = await this.fetchViaProxy(this.FALLBACK_LIST_URL);
             }
 
             if (!text) {
@@ -178,40 +180,6 @@ const IPTV = {
     },
 
     // ==========================================
-    // PROXY VIA SERVICE WORKER
-    // ==========================================
-    async fetchViaProxy(url) {
-        // Se tem service worker registrado, ele pode interceptar e proxy
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            try {
-                // Envia mensagem pro SW para fazer fetch
-                const msg = new Promise((resolve, reject) => {
-                    const channel = new MessageChannel();
-                    channel.port1.onmessage = (event) => {
-                        if (event.data.error) reject(new Error(event.data.error));
-                        else resolve(event.data.response);
-                    };
-                    navigator.serviceWorker.controller.postMessage(
-                        { type: 'PROXY_FETCH', url: url },
-                        [channel.port2]
-                    );
-                });
-
-                // Timeout de 10s
-                const timeout = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Proxy timeout')), 10000)
-                );
-
-                return await Promise.race([msg, timeout]);
-            } catch(e) {
-                console.log('Proxy SW falhou:', e.message);
-                return null;
-            }
-        }
-        return null;
-    },
-
-    // ==========================================
     // PARSE M3U
     // ==========================================
     parseM3U(text) {
@@ -227,7 +195,6 @@ const IPTV = {
             if (line.startsWith('#EXTINF:')) {
                 current = { id: id++, group: '', name: '', logo: '', url: '' };
 
-                // Extrai atributos
                 const groupMatch = line.match(/group-title="([^"]*)"/i);
                 if (groupMatch) current.group = groupMatch[1].trim() || 'Sem categoria';
                 else current.group = 'Sem categoria';
@@ -318,11 +285,11 @@ const IPTV = {
 
         if (nowPlaying) nowPlaying.textContent = ch.name;
 
-        // Verifica se URL é HTTP (vai ser bloqueada no PWA)
+        // Verifica se URL é HTTP (vai ser bloqueada no PWA sem SW)
         const isHttp = ch.url.startsWith('http:');
         const isHls = ch.url.includes('.m3u') || ch.url.includes('.m3u8');
 
-        // ESTRATÉGIA 1: HLS.js nativo (funciona se for HTTPS ou proxy SW ativo)
+        // ESTRATÉGIA 1: HLS.js nativo (funciona se for HTTPS ou SW ativo)
         if (window.Hls && isHls && !isHttp) {
             if (playerBox) playerBox.style.display = 'block';
             if (fallbackBox) fallbackBox.style.display = 'none';
@@ -346,7 +313,7 @@ const IPTV = {
                 this.hls.on(Hls.Events.ERROR, (event, data) => {
                     if (data.fatal) {
                         this.hls.destroy();
-                        this.fallbackToExternal(ch); // Erro fatal → fallback
+                        this.fallbackToExternal(ch);
                     }
                 });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -356,7 +323,7 @@ const IPTV = {
                 this.fallbackToExternal(ch);
             }
         } 
-        // ESTRATÉGIA 2: HTTP ou não-HLS → abre em nova aba (única forma segura)
+        // ESTRATÉGIA 2: HTTP ou não-HLS → abre em nova aba
         else {
             this.fallbackToExternal(ch);
         }
@@ -372,7 +339,6 @@ const IPTV = {
         if (playerBox) playerBox.style.display = 'none';
         if (fallbackBox) fallbackBox.style.display = 'block';
 
-        // Abre em nova aba após 1.5s (tempo de ler a mensagem)
         setTimeout(() => {
             window.open(ch.url, '_blank');
         }, 1500);
@@ -437,7 +403,6 @@ const IPTV = {
 
         localStorage.setItem('cineradar_iptv_favs', JSON.stringify(this.favorites));
 
-        // Re-renderiza o card específico
         const card = document.querySelector(`.iptv-channel-card[onclick*="${id}"]`);
         if (card) {
             const btn = card.querySelector('.iptv-fav-btn');
@@ -458,7 +423,7 @@ const IPTV = {
 };
 
 // ==========================================
-// CSS INLINE PARA IPTV (adicione ao seu CSS principal)
+// CSS INLINE PARA IPTV
 // ==========================================
 const iptvStyles = `
 .iptv-page { padding: 16px; max-width: 1200px; margin: 0 auto; }
