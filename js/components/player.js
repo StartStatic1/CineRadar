@@ -7,6 +7,25 @@ const Player = {
     activePlayerIndex: parseInt(localStorage.getItem('cineradar_player') || '0'),
     playerHistory: JSON.parse(localStorage.getItem('cineradar_player_history') || '[]'),
 
+    // Configurações de iframe por player (crítico para compatibilidade)
+    PLAYER_CONFIG: {
+        betterflix: {
+            referrerpolicy: 'origin',           // BetterFlix precisa saber de onde vem
+            sandbox: null,                       // Sem sandbox — BetterFlix precisa de liberdade total
+            allow: 'fullscreen; autoplay; encrypted-media; picture-in-picture; clipboard-read; clipboard-write'
+        },
+        myembed: {
+            referrerpolicy: 'no-referrer',       // MyEmbed não liga pro referrer
+            sandbox: 'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation',
+            allow: 'fullscreen; autoplay; encrypted-media; picture-in-picture'
+        },
+        superflix: {
+            referrerpolicy: 'no-referrer',
+            sandbox: 'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation',
+            allow: 'fullscreen; autoplay; encrypted-media; picture-in-picture'
+        }
+    },
+
     ensureModalContainer() {
         let modal = document.getElementById('player-modal');
         if (!modal) {
@@ -28,6 +47,15 @@ const Player = {
         const modal = this.ensureModalContainer();
         const player = CONFIG.PLAYERS[this.activePlayerIndex];
         const url = player.getUrl(id, type, season, episode);
+        const playerId = player.id;
+        const pConfig = this.PLAYER_CONFIG[playerId] || this.PLAYER_CONFIG.superflix;
+
+        // Monta atributos do iframe dinamicamente por player
+        let iframeAttrs = `id="player-iframe" src="${url}"`;
+        iframeAttrs += ` allow="${pConfig.allow}"`;
+        iframeAttrs += ` allowfullscreen`;
+        if (pConfig.referrerpolicy) iframeAttrs += ` referrerpolicy="${pConfig.referrerpolicy}"`;
+        if (pConfig.sandbox) iframeAttrs += ` sandbox="${pConfig.sandbox}"`;
 
         modal.innerHTML = `
             <div id="player-overlay" style="
@@ -54,17 +82,20 @@ const Player = {
                             </div>
                         </div>
                     </div>
-                    <button onclick="Player.close()" class="player-header-btn">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <!-- Botão Abrir no Navegador (fallback) -->
+                        <button onclick="Player.openInBrowser()" class="player-header-btn" title="Abrir no navegador" style="font-size:0.75rem; padding:6px 10px;">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                        <button onclick="Player.close()" class="player-header-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Body -->
                 <div style="flex:1; position:relative; background:#000;">
-                    <iframe id="player-iframe" src="${url}"
-                        allow="fullscreen; autoplay; encrypted-media"
-                        allowfullscreen
-                        referrerpolicy="no-referrer"
+                    <iframe ${iframeAttrs}
                         style="width:100%; height:100%; border:none; position:absolute; inset:0;"
                     ></iframe>
 
@@ -80,7 +111,14 @@ const Player = {
                     ">
                         <i class="fas fa-exclamation-triangle" style="color:var(--danger); font-size:3rem;"></i>
                         <p style="color:var(--text-secondary); font-size:0.9rem;">Erro ao carregar esta fonte.</p>
-                        <p style="color:var(--text-muted); font-size:0.8rem;">Tente outra fonte abaixo.</p>
+                        <p style="color:var(--text-muted); font-size:0.8rem;">Tente outra fonte abaixo ou abra no navegador.</p>
+                        <button onclick="Player.openInBrowser()" style="
+                            padding:12px 24px; background:${player.color}; color:#fff;
+                            border:none; border-radius:10px; font-weight:700; cursor:pointer;
+                            display:flex; align-items:center; gap:8px;
+                        ">
+                            <i class="fas fa-external-link-alt"></i> Abrir no navegador
+                        </button>
                     </div>
                 </div>
 
@@ -139,20 +177,37 @@ const Player = {
             };
         }
 
-        setTimeout(() => {
+        // Timeout de segurança: se não carregar em 12s, mostra erro
+        this._loadTimeout = setTimeout(() => {
+            if (loading && loading.style.display !== 'none') {
+                loading.style.display = 'none';
+                if (errorDiv) errorDiv.style.display = 'flex';
+            }
+        }, 12000);
+
+        // Timeout de aviso: após 8s mostra "demorando"
+        this._warnTimeout = setTimeout(() => {
             if (loading && loading.style.display !== 'none') {
                 loading.innerHTML = `
                     <div class="player-spinner" style="border-top-color:var(--warning)"></div>
                     <p style="color:var(--warning)">Demorando? Tente outra fonte.</p>
                 `;
             }
-        }, 10000);
+        }, 8000);
 
         // === FORÇA LANDSCAPE NO MOBILE ===
         this.lockOrientation();
 
         this.setupFullscreenHandler();
         this.addToHistory(id, type, title);
+    },
+
+    // === NOVO: Abrir player no navegador externo ===
+    openInBrowser() {
+        const player = CONFIG.PLAYERS[this.activePlayerIndex];
+        if (!player || !this.currentId) return;
+        const url = player.getUrl(this.currentId, this.currentType, this.currentSeason, this.currentEpisode);
+        window.open(url, '_blank');
     },
 
     goBackToDetails() {
@@ -165,18 +220,33 @@ const Player = {
     },
 
     switchSource(index) {
+        // Limpa timeouts antigos
+        if (this._loadTimeout) clearTimeout(this._loadTimeout);
+        if (this._warnTimeout) clearTimeout(this._warnTimeout);
+
         this.activePlayerIndex = index;
         localStorage.setItem('cineradar_player', index.toString());
 
         const player = CONFIG.PLAYERS[index];
         const url = player.getUrl(this.currentId, this.currentType, this.currentSeason, this.currentEpisode);
+        const playerId = player.id;
+        const pConfig = this.PLAYER_CONFIG[playerId] || this.PLAYER_CONFIG.superflix;
 
         const iframe = document.getElementById('player-iframe');
         const loading = document.getElementById('player-loading');
         const errorDiv = document.getElementById('player-error');
 
         if (iframe) {
+            // Reaplica atributos dinamicamente
             iframe.src = url;
+            iframe.setAttribute('allow', pConfig.allow);
+            iframe.setAttribute('referrerpolicy', pConfig.referrerpolicy || '');
+            if (pConfig.sandbox) {
+                iframe.setAttribute('sandbox', pConfig.sandbox);
+            } else {
+                iframe.removeAttribute('sandbox');
+            }
+
             if (loading) {
                 loading.style.display = 'flex';
                 loading.style.opacity = '1';
@@ -214,14 +284,22 @@ const Player = {
             }
         });
 
-        setTimeout(() => {
+        // Reconfigura timeouts
+        this._warnTimeout = setTimeout(() => {
             if (loading && loading.style.display !== 'none') {
                 loading.innerHTML = `
                     <div class="player-spinner" style="border-top-color:var(--warning)"></div>
                     <p style="color:var(--warning)">Demorando? Tente outra fonte.</p>
                 `;
             }
-        }, 10000);
+        }, 8000);
+
+        this._loadTimeout = setTimeout(() => {
+            if (loading && loading.style.display !== 'none') {
+                loading.style.display = 'none';
+                if (errorDiv) errorDiv.style.display = 'flex';
+            }
+        }, 12000);
     },
 
     setupFullscreenHandler() {
@@ -229,7 +307,13 @@ const Player = {
         const header = document.querySelector('.player-header-bar');
         if (!sourcesBar || !header) return;
 
-        const onFullscreenChange = () => {
+        // Remove handler anterior se existir (evita memory leak)
+        if (this._fsHandler) {
+            document.removeEventListener('fullscreenchange', this._fsHandler);
+            document.removeEventListener('webkitfullscreenchange', this._fsHandler);
+        }
+
+        this._fsHandler = () => {
             const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
             if (isFullscreen) {
                 sourcesBar.style.display = 'none';
@@ -240,11 +324,11 @@ const Player = {
             }
         };
 
-        document.addEventListener('fullscreenchange', onFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+        document.addEventListener('fullscreenchange', this._fsHandler);
+        document.addEventListener('webkitfullscreenchange', this._fsHandler);
     },
 
-    // === NOVO: BLOQUEIA ORIENTAÇÃO EM LANDSCAPE ===
+    // === BLOQUEIA ORIENTAÇÃO EM LANDSCAPE ===
     lockOrientation() {
         if (screen.orientation && screen.orientation.lock) {
             screen.orientation.lock('landscape').catch(() => {
@@ -253,7 +337,7 @@ const Player = {
         }
     },
 
-    // === NOVO: LIBERA ORIENTAÇÃO ===
+    // === LIBERA ORIENTAÇÃO ===
     unlockOrientation() {
         if (screen.orientation && screen.orientation.unlock) {
             screen.orientation.unlock();
@@ -269,7 +353,11 @@ const Player = {
     },
 
     close() {
-        // Libera orientação ao fechar
+        // Limpa timeouts pendentes
+        if (this._loadTimeout) clearTimeout(this._loadTimeout);
+        if (this._warnTimeout) clearTimeout(this._warnTimeout);
+
+        // Libera orientação
         this.unlockOrientation();
 
         const modal = document.getElementById('player-modal');
