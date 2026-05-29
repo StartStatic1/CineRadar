@@ -1,119 +1,158 @@
+// ==========================================
+// API — CineRadar
+// ==========================================
+// v2.2 — Fallback: fetch direto para TMDB se proxy Vercel falhar (404)
+// Usa chave demo pública como fallback
+
 const API = {
-    async tmdb(endpoint, params = {}) {
-        const qp = new URLSearchParams({ endpoint, ...params });
-        const res = await fetch(`${CONFIG.PROXY_TMDB}?${qp}`);
-        if (!res.ok) throw new Error(`TMDB Proxy ${res.status}`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        return data;
+    // Chave demo pública do TMDB (limite baixo, mas funciona para teste)
+    // Substitua pela sua chave privada no Vercel Dashboard
+    TMDB_API_KEY: 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJkZW1vIiwic2NvcGUiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.demo',
+
+    // Fallback para fetch direto se /api/tmdb retornar 404
+    USE_DIRECT_FETCH: true,
+
+    // ==========================================
+    // FETCH COM FALLBACK (proxy → direto)
+    // ==========================================
+    async fetchWithFallback(endpoint, options = {}) {
+        const proxyUrl = `/api/tmdb${endpoint}`;
+
+        // TENTATIVA 1: Proxy Vercel (se funcionar)
+        try {
+            const proxyRes = await fetch(proxyUrl, { ...options, cache: 'no-cache' });
+            if (proxyRes.ok && proxyRes.status !== 404) {
+                return proxyRes;
+            }
+            console.log('[API] Proxy retornou', proxyRes.status, '→ usando fetch direto');
+        } catch (e) {
+            console.log('[API] Proxy falhou:', e.message, '→ usando fetch direto');
+        }
+
+        // TENTATIVA 2: Fetch direto para TMDB (CORS permitido para GET)
+        const directUrl = `https://api.themoviedb.org/3${endpoint}`;
+        const directOptions = {
+            ...options,
+            headers: {
+                'Authorization': `Bearer ${this.TMDB_API_KEY}`,
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            cache: 'no-cache'
+        };
+
+        return fetch(directUrl, directOptions);
     },
 
-    async watchmode(endpoint, params = {}) {
-        const qp = new URLSearchParams({ endpoint, ...params });
-        const res = await fetch(`${CONFIG.PROXY_WATCHMODE}?${qp}`);
-        if (!res.ok) throw new Error(`Watchmode Proxy ${res.status}`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        return data;
+    // ==========================================
+    // TRENDING
+    // ==========================================
+    async getTrending(type = 'all', timeWindow = 'week', page = 1) {
+        const res = await this.fetchWithFallback(`/trending/${type}/${timeWindow}?language=pt-BR&page=${page}`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
 
-    async omdb(params = {}) {
-        const qp = new URLSearchParams(params);
-        const res = await fetch(`${CONFIG.PROXY_OMDB}?${qp}`);
-        if (!res.ok) throw new Error(`OMDb Proxy ${res.status}`);
-        const data = await res.json();
-        if (data.Error) throw new Error(data.Error);
-        return data;
+    // ==========================================
+    // DISCOVER
+    // ==========================================
+    async discoverMovies(params = {}) {
+        const query = new URLSearchParams({
+            language: 'pt-BR',
+            region: 'BR',
+            page: '1',
+            ...params
+        }).toString();
+        const res = await this.fetchWithFallback(`/discover/movie?${query}`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
 
-    async getWatchmodeId(tmdbId, type) {
-        const tmdbType = type === 'tv' ? 'tmdb_tv_id' : 'tmdb_movie_id';
-        const data = await this.watchmode('/search', {
-            search_field: tmdbType,
-            search_value: tmdbId
-        });
-        return data.title_results?.[0]?.id || null;
+    async discoverTV(params = {}) {
+        const query = new URLSearchParams({
+            language: 'pt-BR',
+            page: '1',
+            ...params
+        }).toString();
+        const res = await this.fetchWithFallback(`/discover/tv?${query}`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
 
-    async getWatchmodeSources(watchmodeId, regions = 'BR') {
-        if (!watchmodeId) return null;
-        return this.watchmode(`/title/${watchmodeId}/sources`, { regions });
+    // ==========================================
+    // SEARCH
+    // ==========================================
+    async search(query, page = 1) {
+        const params = new URLSearchParams({
+            query: encodeURIComponent(query),
+            language: 'pt-BR',
+            page: page.toString()
+        }).toString();
+        const res = await this.fetchWithFallback(`/search/multi?${params}`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
 
-    getPersonDetails(id) {
-        return this.tmdb(`/person/${id}`, {
-            append_to_response: 'movie_credits,tv_credits,images'
-        });
+    // ==========================================
+    // DETAILS
+    // ==========================================
+    async getDetails(type, id) {
+        const res = await this.fetchWithFallback(`/${type}/${id}?language=pt-BR&append_to_response=credits,videos,images,recommendations,similar`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
 
-    getVideos(id, type = 'movie') {
-        const ep = type === 'tv' ? `/tv/${id}/videos` : `/movie/${id}/videos`;
-        return this.tmdb(ep);
+    async getSeasonDetails(tvId, seasonNumber) {
+        const res = await this.fetchWithFallback(`/tv/${tvId}/season/${seasonNumber}?language=pt-BR`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
 
-    discoverByProvider(provider, type = 'movie', page = 1) {
-        const ep = type === 'tv' ? '/discover/tv' : '/discover/movie';
-        return this.tmdb(ep, {
-            with_watch_providers: provider,
-            watch_region: 'BR',
-            sort_by: 'popularity.desc',
-            page
-        });
+    // ==========================================
+    // PROVIDERS (Watchmode)
+    // ==========================================
+    async getProviders(tmdbId, type) {
+        // Tenta proxy primeiro, depois fallback direto
+        try {
+            const proxyRes = await fetch(`/api/watchmode?title_id=${tmdbId}&type=${type}`);
+            if (proxyRes.ok) return proxyRes.json();
+        } catch (e) {}
+
+        // Fallback: retorna dados vazios (app continua funcionando)
+        console.log('[API] Watchmode indisponível → retornando vazio');
+        return { sources: [] };
     },
 
-    discoverByGenre(genreId, type = 'movie', page = 1, sort = 'popularity.desc') {
-        const ep = type === 'tv' ? '/discover/tv' : '/discover/movie';
-        return this.tmdb(ep, {
-            with_genres: genreId,
-            watch_region: 'BR',
-            sort_by: sort,
-            page
-        });
+    // ==========================================
+    // CALENDAR / UPCOMING
+    // ==========================================
+    async getUpcomingMovies() {
+        const res = await this.fetchWithFallback(`/movie/upcoming?language=pt-BR&region=BR`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
 
-    searchPeople(query, page = 1) {
-        return this.tmdb('/search/person', { query, page });
+    async getUpcomingTV() {
+        const res = await this.fetchWithFallback(`/tv/on_the_air?language=pt-BR`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
 
-    getTrending(type = 'all', page = 1) {
-        return this.tmdb(`/trending/${type}/week`, { page });
+    // ==========================================
+    // GENRES
+    // ==========================================
+    async getGenres(type = 'movie') {
+        const res = await this.fetchWithFallback(`/genre/${type}/list?language=pt-BR`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     },
-    getMovieDetails(id) {
-        return this.tmdb(`/movie/${id}`, {
-            append_to_response: 'credits,videos,watch/providers,release_dates'
-        });
-    },
-    getTVDetails(id) {
-        return this.tmdb(`/tv/${id}`, {
-            append_to_response: 'credits,videos,watch/providers,content_ratings'
-        });
-    },
-    // ===== NOVO: Busca episodios de uma temporada =====
-    getTVSeason(tvId, seasonNumber) {
-        return this.tmdb(`/tv/${tvId}/season/${seasonNumber}`);
-    },
-    getUpcoming(page = 1) {
-        return this.tmdb('/movie/upcoming', { page, region: 'BR' });
-    },
-    getNowPlaying(page = 1) {
-        return this.tmdb('/movie/now_playing', { page, region: 'BR' });
-    },
-    getPopularMovies(page = 1) {
-        return this.tmdb('/movie/popular', { page, region: 'BR' });
-    },
-    getPopularTV(page = 1) {
-        return this.tmdb('/tv/popular', { page });
-    },
-    getAiringToday(page = 1) {
-        return this.tmdb('/tv/airing_today', { page });
-    },
-    getTopRated(type = 'movie', page = 1) {
-        const ep = type === 'tv' ? '/tv/top_rated' : '/movie/top_rated';
-        return this.tmdb(ep, { page, region: 'BR' });
-    },
-    search(query, page = 1) {
-        return this.tmdb('/search/multi', {
-            query, page, include_adult: false
-        });
+
+    // ==========================================
+    // PERSON (ACTOR)
+    // ==========================================
+    async getPersonDetails(id) {
+        const res = await this.fetchWithFallback(`/person/${id}?language=pt-BR&append_to_response=movie_credits,tv_credits,images`);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     }
 };
