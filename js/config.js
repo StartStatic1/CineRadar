@@ -13,7 +13,7 @@ const CONFIG = {
     REGION: 'BR',
     LANGUAGE: 'pt-BR',
 
-    // ===== PLAYERS FUNCIONAIS (4 fontes) =====
+    // ===== PLAYERS FUNCIONAIS (3 fontes) =====
     PLAYERS: [
         {
             id: 'betterflix',
@@ -46,17 +46,6 @@ const CONFIG = {
                 if (type === 'movie') return `https://superflixapi.best/filme/${id}`;
                 if (season && episode) return `https://superflixapi.best/serie/${id}/${season}/${episode}`;
                 return `https://superflixapi.best/serie/${id}`;
-            }
-        },
-        {
-            id: 'megaembed',
-            name: 'MegaEmbed',
-            icon: 'fa-play-circle',
-            color: '#00ff88',
-            getUrl: (id, type, season, episode) => {
-                if (type === 'movie') return `https://megaembedapi.site/embed/${id}`;
-                if (season && episode) return `https://megaembedapi.site/embed/${id}/${season}/${episode}`;
-                return `https://megaembedapi.site/embed/${id}`;
             }
         }
     ],
