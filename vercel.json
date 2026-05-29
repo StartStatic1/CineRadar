@@ -1,17 +1,17 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
   "rewrites": [
     {
-      "source": "/api/tmdb/:path*",
-      "destination": "https://api.themoviedb.org/3/:path*"
+      "source": "/api/tmdb",
+      "destination": "/api/tmdb.js"
     },
     {
-      "source": "/api/watchmode/:path*",
-      "destination": "https://api.watchmode.com/v1/:path*"
+      "source": "/api/watchmode",
+      "destination": "/api/watchmode.js"
     },
     {
-      "source": "/api/omdb/:path*",
-      "destination": "https://www.omdbapi.com/:path*"
+      "source": "/api/omdb",
+      "destination": "/api/omdb.js"
     },
     {
       "source": "/(.*)",
@@ -20,11 +20,15 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,OPTIONS"
         }
       ]
     }
