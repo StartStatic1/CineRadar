@@ -10,18 +10,23 @@ const Player = {
     // Configurações de iframe por player (crítico para compatibilidade)
     PLAYER_CONFIG: {
         betterflix: {
-            referrerpolicy: 'origin',           // BetterFlix precisa saber de onde vem
-            sandbox: null,                       // Sem sandbox — BetterFlix precisa de liberdade total
+            referrerpolicy: 'origin',
+            sandbox: null,
             allow: 'fullscreen; autoplay; encrypted-media; picture-in-picture; clipboard-read; clipboard-write'
         },
         myembed: {
-            referrerpolicy: 'no-referrer',       // MyEmbed não liga pro referrer
+            referrerpolicy: 'no-referrer',
             sandbox: 'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation',
             allow: 'fullscreen; autoplay; encrypted-media; picture-in-picture'
         },
         superflix: {
             referrerpolicy: 'no-referrer',
             sandbox: 'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation',
+            allow: 'fullscreen; autoplay; encrypted-media; picture-in-picture'
+        },
+        megaembed: {
+            referrerpolicy: 'origin',
+            sandbox: null,
             allow: 'fullscreen; autoplay; encrypted-media; picture-in-picture'
         }
     },

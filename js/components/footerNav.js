@@ -7,6 +7,7 @@ const FooterNav = {
         const items = [
             { path: '#/home', icon: 'fa-home', label: 'Inicio' },
             { path: '#/explore', icon: 'fa-compass', label: 'Explorar' },
+            { path: '#/iptv', icon: 'fa-tv', label: 'TV' },
             { path: '#/reels', icon: 'fa-film', label: 'Reels' },
             { path: '#/mylist', icon: 'fa-bookmark', label: 'Minha Lista' },
             { path: '#/search', icon: 'fa-search', label: 'Buscar' }
@@ -30,7 +31,6 @@ const FooterNav = {
             }
         };
         inject();
-        // Se ainda nao carregou, tenta de novo em 500ms
         if (!window.CineAds) {
             setTimeout(inject, 500);
         }

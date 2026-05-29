@@ -1,6 +1,6 @@
 const Navbar = {
     render() {
-        const c = $('#navbar-container');
+        const c = document.getElementById('navbar-container');
         if (!c) return;
         c.innerHTML = `
             <nav class="navbar">
@@ -8,7 +8,6 @@ const Navbar = {
                 <div class="nav-actions">
                     <a href="#/search" class="search-trigger"><i class="fas fa-search"></i></a>
                 </div>
-            </nav>
-        `;
+            </nav>`;
     }
 };
