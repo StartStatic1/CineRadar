@@ -1,7 +1,7 @@
 // ==========================================
 // SERVICE WORKER — CineRadar PWA
 // ==========================================
-// v2.0 — Adicionado proxy para HTTP (IPTV/Mixed Content)
+// v2.1 — Proxy HTTP corrigido (remove no-cors que impedia leitura)
 
 const CACHE_NAME = 'cineradar-v2';
 const STATIC_ASSETS = [
@@ -49,7 +49,6 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(STATIC_ASSETS).catch(() => {
-                // Ignora falhas individuais (ex: arquivos que ainda não existem)
                 console.log('[SW] Alguns assets não puderam ser cacheados');
             });
         })
@@ -81,7 +80,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
 
     // --- STRATEGY 1: Proxy para HTTP (IPTV/Mixed Content) ---
-    // Intercepta requisições HTTP e faz fetch via SW (bypass mixed content)
+    // O SW roda em HTTPS e pode fazer fetch para HTTP sem mixed-content block
     if (url.protocol === 'http:' && !url.hostname.includes('localhost')) {
         event.respondWith(
             fetch(request).catch((err) => {
@@ -97,8 +96,11 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(request)
                 .then((response) => {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+                    // Só cacheia respostas OK (não 404/500)
+                    if (response.ok && response.status === 200) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+                    }
                     return response;
                 })
                 .catch(() => caches.match(request))
@@ -128,14 +130,18 @@ self.addEventListener('fetch', (event) => {
 });
 
 // ==========================================
-// MESSAGE — Proxy fetch via SW (para bypass CORS/HTTP)
+// MESSAGE — Proxy fetch via SW (para bypass CORS em HTTPS)
+// ==========================================
+// NOTA: mode: 'no-cors' foi REMOVIDO porque retorna resposta opaque
+// que não pode ser lida com .text(). Para HTTP, o fetch event acima
+// já intercepta automaticamente. Para HTTPS com CORS, este proxy
+// tenta fetch normal e retorna erro se CORS bloquear.
 // ==========================================
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'PROXY_FETCH') {
         const { url } = event.data;
 
         fetch(url, { 
-            mode: 'no-cors',
             cache: 'no-cache',
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -143,7 +149,11 @@ self.addEventListener('message', (event) => {
         })
         .then(async (response) => {
             const text = await response.text();
-            event.ports[0].postMessage({ response: text });
+            event.ports[0].postMessage({ 
+                response: text, 
+                status: response.status,
+                ok: response.ok 
+            });
         })
         .catch((err) => {
             event.ports[0].postMessage({ error: err.message });

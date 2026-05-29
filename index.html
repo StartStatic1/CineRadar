@@ -43,7 +43,7 @@
     <!-- Toast -->
     <div id="toast-container"></div>
 
-    <!-- Player Modal (Filmes/Séries) -->
+    <!-- Player Modal (Filmes/Series) -->
     <div id="player-modal"></div>
 
     <!-- Main Content -->
@@ -83,7 +83,7 @@
                 margin: 0 auto 16px; font-size: 26px; animation: gateIconPulse 2s ease infinite;
             ">🍿</div>
 
-            <h2 style="margin: 0 0 6px; font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.3px;">Sessão Especial</h2>
+            <h2 style="margin: 0 0 6px; font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.3px;">Sessao Especial</h2>
             <p style="margin: 0 0 20px; font-size: 13px; color: #888; line-height: 1.5;">
                 Desbloqueie <strong style="color:#e50914">5 horas</strong> de streaming sem paradas.
             </p>
@@ -211,5 +211,25 @@
     <script src="js/app.js"></script>
     <script src="js/protect.js"></script>
     <script src="js/adGate.js"></script>
+
+    <!-- ===== REGISTRO DO SERVICE WORKER ===== -->
+    <script>
+    (function() {
+        'use strict';
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('[SW] Registrado com sucesso:', registration.scope);
+                        // Forca update imediato
+                        registration.update();
+                    })
+                    .catch(function(err) {
+                        console.log('[SW] Falha no registro:', err);
+                    });
+            });
+        }
+    })();
+    </script>
 </body>
 </html>
